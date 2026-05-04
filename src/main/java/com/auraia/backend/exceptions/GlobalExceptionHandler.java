@@ -51,11 +51,18 @@ public class GlobalExceptionHandler {
         return error(HttpStatus.NOT_FOUND, code("error.resource_not_found", locale), request, Map.of());
     }
 
-    @ExceptionHandler({UnauthorizedException.class, BadCredentialsException.class})
-    ResponseEntity<ApiErrorResponse> handleUnauthorized(RuntimeException ex,
+    @ExceptionHandler(UnauthorizedException.class)
+    ResponseEntity<ApiErrorResponse> handleUnauthorized(UnauthorizedException ex,
                                                         HttpServletRequest request,
                                                         Locale locale) {
         return error(HttpStatus.UNAUTHORIZED, code("error.unauthorized", locale), request, Map.of());
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    ResponseEntity<ApiErrorResponse> handleBadCredentials(BadCredentialsException ex,
+                                                          HttpServletRequest request,
+                                                          Locale locale) {
+        return error(HttpStatus.UNAUTHORIZED, code("error.bad_credentials", locale), request, Map.of());
     }
 
     @ExceptionHandler(AccessDeniedException.class)

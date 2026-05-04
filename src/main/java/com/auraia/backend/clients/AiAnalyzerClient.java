@@ -10,8 +10,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.web.client.ClientHttpRequestFactories;
-import org.springframework.boot.web.client.ClientHttpRequestFactorySettings;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
@@ -25,12 +24,12 @@ public class AiAnalyzerClient {
 
     public AiAnalyzerClient(AppProperties properties, RestClient.Builder builder) {
         this.properties = properties;
-        Duration timeout = Duration.ofMillis(properties.getAi().getTimeoutMs());
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(Duration.ofMillis(properties.getAi().getTimeoutMs()));
+        requestFactory.setReadTimeout(Duration.ofMillis(properties.getAi().getTimeoutMs()));
         this.restClient = builder
             .baseUrl(properties.getAi().getServiceUrl())
-            .requestFactory(ClientHttpRequestFactories.get(ClientHttpRequestFactorySettings.DEFAULTS
-                .withConnectTimeout(timeout)
-                .withReadTimeout(timeout)))
+            .requestFactory(requestFactory)
             .build();
     }
 
