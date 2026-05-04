@@ -1,0 +1,9 @@
+spring:
+  jpa:
+    show-sql: false
+
+app:
+  dev-demo-user:
+    enabled: ${DEV_DEMO_USER_ENABLED:false}
+    email: ${DEV_DEMO_USER_EMAIL:demo@aura.ai}
+    password: ${DEV_DEMO_USER_PASSWORD:}
