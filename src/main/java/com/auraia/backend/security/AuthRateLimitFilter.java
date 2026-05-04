@@ -39,7 +39,7 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
             return;
         }
 
-        response.setStatus(HttpServletResponse.SC_TOO_MANY_REQUESTS);
+        response.setStatus(429);
         response.setContentType("application/json");
         response.getWriter().write("{\"message\":\"Too many authentication attempts\"}");
     }

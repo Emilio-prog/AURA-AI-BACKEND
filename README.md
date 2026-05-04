@@ -99,7 +99,11 @@ Crisis/autolesion keywords in mock mode return a safety response referencing Spa
 ./mvnw test
 ```
 
-Integration tests use Testcontainers PostgreSQL.
+Integration tests use Testcontainers PostgreSQL and are opt-in so regular builds do not fail on machines where Docker Desktop is not running:
+
+```bash
+./mvnw test -Daura.integration-tests=true
+```
 
 ## Frontend Contract Notes
 

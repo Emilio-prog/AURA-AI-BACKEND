@@ -4,6 +4,20 @@ BASE_DIR="$(cd "$(dirname "$0")" && pwd)"
 WRAPPER_DIR="$BASE_DIR/.mvn/wrapper"
 WRAPPER_JAR="$WRAPPER_DIR/maven-wrapper.jar"
 WRAPPER_URL="https://repo.maven.apache.org/maven2/org/apache/maven/wrapper/maven-wrapper/3.3.2/maven-wrapper-3.3.2.jar"
+if [ -z "$MAVEN_USER_HOME" ]; then
+  MAVEN_USER_HOME="$BASE_DIR/.mvn/maven-user-home"
+  export MAVEN_USER_HOME
+fi
+
+if [ -z "$JAVA_HOME" ]; then
+  for candidate in "$HOME"/.jdks/*21*; do
+    if [ -x "$candidate/bin/java" ]; then
+      JAVA_HOME="$candidate"
+      export JAVA_HOME
+      break
+    fi
+  done
+fi
 
 if [ -z "$JAVA_HOME" ]; then
   JAVA_EXE="java"
@@ -23,4 +37,4 @@ if [ ! -f "$WRAPPER_JAR" ]; then
   fi
 fi
 
-exec "$JAVA_EXE" -jar "$WRAPPER_JAR" "$@"
+exec "$JAVA_EXE" -classpath "$WRAPPER_JAR" "-Dmaven.multiModuleProjectDirectory=$BASE_DIR" org.apache.maven.wrapper.MavenWrapperMain "$@"
