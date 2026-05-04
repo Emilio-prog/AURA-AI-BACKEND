@@ -22,7 +22,7 @@
         <jjwt.version>0.12.6</jjwt.version>
         <mapstruct.version>1.6.3</mapstruct.version>
         <lombok.version>1.18.34</lombok.version>
-        <bucket4j.version>8.10.1</bucket4j.version>
+        <bucket4j.version>8.15.0</bucket4j.version>
         <springdoc.version>2.6.0</springdoc.version>
     </properties>
 
@@ -84,7 +84,7 @@
         </dependency>
         <dependency>
             <groupId>com.bucket4j</groupId>
-            <artifactId>bucket4j-core</artifactId>
+            <artifactId>bucket4j_jdk17-core</artifactId>
             <version>${bucket4j.version}</version>
         </dependency>
         <dependency>

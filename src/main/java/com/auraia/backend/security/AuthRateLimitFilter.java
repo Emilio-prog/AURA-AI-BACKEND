@@ -1,9 +1,7 @@
 package com.auraia.backend.security;
 
 import com.auraia.backend.config.AppProperties;
-import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
-import io.github.bucket4j.Refill;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -55,11 +53,10 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
     }
 
     private Bucket newBucket() {
-        Refill refill = Refill.greedy(
-            properties.getRateLimit().getAuthCapacity(),
-            Duration.ofMinutes(properties.getRateLimit().getAuthRefillMinutes())
-        );
-        Bandwidth limit = Bandwidth.classic(properties.getRateLimit().getAuthCapacity(), refill);
-        return Bucket.builder().addLimit(limit).build();
+        long capacity = properties.getRateLimit().getAuthCapacity();
+        Duration refillPeriod = Duration.ofMinutes(properties.getRateLimit().getAuthRefillMinutes());
+        return Bucket.builder()
+            .addLimit(limit -> limit.capacity(capacity).refillGreedy(capacity, refillPeriod))
+            .build();
     }
 }
