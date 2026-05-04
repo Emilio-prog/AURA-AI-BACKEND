@@ -11,6 +11,12 @@ if "%JAVA_HOME%"=="" (
   set JAVA_EXE=%JAVA_HOME%\bin\java.exe
 )
 
+"%JAVA_EXE%" -version >NUL 2>&1
+if errorlevel 1 (
+  echo Java 21 is required and was not found in JAVA_HOME or PATH.
+  exit /b 1
+)
+
 if not exist "%WRAPPER_JAR%" (
   if not exist "%WRAPPER_DIR%" mkdir "%WRAPPER_DIR%"
   powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri '%WRAPPER_URL%' -OutFile '%WRAPPER_JAR%'"
@@ -18,4 +24,5 @@ if not exist "%WRAPPER_JAR%" (
 )
 
 "%JAVA_EXE%" -jar "%WRAPPER_JAR%" %*
-endlocal
+set EXIT_CODE=%ERRORLEVEL%
+endlocal & exit /b %EXIT_CODE%

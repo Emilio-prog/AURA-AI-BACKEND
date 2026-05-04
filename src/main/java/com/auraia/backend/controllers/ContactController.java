@@ -5,6 +5,7 @@ import com.auraia.backend.models.dto.response.AuthResponses;
 import com.auraia.backend.models.dto.response.DomainResponses;
 import com.auraia.backend.services.contact.ContactService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/contacts")
+@ApiResponse(responseCode = "401", description = "Authentication required")
 public class ContactController {
 
     private final ContactService contactService;

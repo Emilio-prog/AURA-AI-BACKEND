@@ -5,6 +5,7 @@ import com.auraia.backend.models.dto.response.DomainResponses;
 import com.auraia.backend.models.dto.response.PageResponse;
 import com.auraia.backend.services.panic.PanicAlertService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/panic")
+@ApiResponse(responseCode = "401", description = "Authentication required")
 public class PanicAlertController {
 
     private final PanicAlertService panicAlertService;

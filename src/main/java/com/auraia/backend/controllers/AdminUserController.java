@@ -5,6 +5,7 @@ import com.auraia.backend.models.dto.response.PageResponse;
 import com.auraia.backend.models.dto.response.UserResponses;
 import com.auraia.backend.services.admin.AdminUserService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/admin/users")
+@ApiResponse(responseCode = "403", description = "Admin role required")
 public class AdminUserController {
 
     private final AdminUserService adminUserService;

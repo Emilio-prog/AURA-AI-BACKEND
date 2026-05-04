@@ -125,12 +125,12 @@ public class AiAnalyzerClient {
 
     private boolean containsCrisis(String normalized) {
         return normalized.contains("panico")
-            || normalized.contains("pánico")
+            || normalized.contains("p\u00e1nico")
             || normalized.contains("crisis")
             || normalized.contains("sos")
             || normalized.contains("suicid")
             || normalized.contains("hacerme dano")
-            || normalized.contains("hacerme daño")
+            || normalized.contains("hacerme da\u00f1o")
             || normalized.contains("autolesion");
     }
 }

@@ -1,5 +1,6 @@
 package com.auraia.backend.services.user;
 
+import com.auraia.backend.config.AppProperties;
 import com.auraia.backend.exceptions.BusinessException;
 import com.auraia.backend.exceptions.ResourceNotFoundException;
 import com.auraia.backend.mappers.ContactMapper;
@@ -11,12 +12,14 @@ import com.auraia.backend.models.dto.request.UserRequests;
 import com.auraia.backend.models.dto.response.AuthResponses;
 import com.auraia.backend.models.dto.response.DomainResponses;
 import com.auraia.backend.models.dto.response.UserResponses;
+import com.auraia.backend.models.entities.EmailVerificationToken;
 import com.auraia.backend.models.entities.PanicAlert;
 import com.auraia.backend.models.entities.PanicNotificationResult;
 import com.auraia.backend.models.entities.User;
 import com.auraia.backend.repositories.ChatSessionRepository;
 import com.auraia.backend.repositories.ContactRepository;
 import com.auraia.backend.repositories.DiaryEntryRepository;
+import com.auraia.backend.repositories.EmailVerificationTokenRepository;
 import com.auraia.backend.repositories.MoodLogRepository;
 import com.auraia.backend.repositories.PanicAlertRepository;
 import com.auraia.backend.repositories.PanicNotificationResultRepository;
@@ -25,7 +28,10 @@ import com.auraia.backend.repositories.UserSettingsRepository;
 import com.auraia.backend.security.SecurityUtils;
 import com.auraia.backend.services.UserDeletionService;
 import com.auraia.backend.services.auth.PasswordPolicyValidator;
+import com.auraia.backend.services.auth.VerificationEmailService;
+import com.auraia.backend.utils.TokenHashing;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -46,6 +52,7 @@ public class UserServiceImpl implements UserService {
     private final ContactRepository contactRepository;
     private final PanicAlertRepository panicAlertRepository;
     private final PanicNotificationResultRepository notificationResultRepository;
+    private final EmailVerificationTokenRepository verificationTokenRepository;
     private final UserMapper userMapper;
     private final UserSettingsMapper userSettingsMapper;
     private final DiaryEntryMapper diaryEntryMapper;
@@ -54,6 +61,8 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final PasswordPolicyValidator passwordPolicyValidator;
     private final UserDeletionService userDeletionService;
+    private final VerificationEmailService verificationEmailService;
+    private final AppProperties properties;
 
     @Override
     @Transactional(readOnly = true)
@@ -65,6 +74,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public UserResponses.UserResponse updateCurrentProfile(UserRequests.UpdateUserRequest request) {
         User user = currentUser();
+        boolean emailChanged = false;
         if (request.name() != null && !request.name().isBlank()) {
             user.setName(request.name().trim());
         }
@@ -76,9 +86,14 @@ public class UserServiceImpl implements UserService {
             if (!email.equals(user.getEmail())) {
                 user.setEmail(email);
                 user.setEmailVerified(false);
+                emailChanged = true;
             }
         }
-        return userMapper.toResponse(userRepository.save(user));
+        User saved = userRepository.save(user);
+        if (emailChanged) {
+            createAndSendVerificationToken(saved);
+        }
+        return userMapper.toResponse(saved);
     }
 
     @Override
@@ -152,6 +167,16 @@ public class UserServiceImpl implements UserService {
             result.getDetails(),
             result.getCreatedAt()
         );
+    }
+
+    private void createAndSendVerificationToken(User user) {
+        String raw = TokenHashing.newOpaqueToken();
+        verificationTokenRepository.save(EmailVerificationToken.builder()
+            .user(user)
+            .tokenHash(TokenHashing.sha256(raw))
+            .expiresAt(Instant.now().plus(properties.getEmail().getVerificationTokenTtlHours(), ChronoUnit.HOURS))
+            .build());
+        verificationEmailService.sendVerificationEmail(user, raw);
     }
 
     private User currentUser() {

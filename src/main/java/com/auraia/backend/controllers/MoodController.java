@@ -6,6 +6,7 @@ import com.auraia.backend.models.dto.response.DomainResponses;
 import com.auraia.backend.models.dto.response.PageResponse;
 import com.auraia.backend.services.mood.MoodService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import java.time.Instant;
 import java.util.UUID;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/mood")
+@ApiResponse(responseCode = "401", description = "Authentication required")
 public class MoodController {
 
     private final MoodService moodService;

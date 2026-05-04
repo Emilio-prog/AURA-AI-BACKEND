@@ -24,7 +24,7 @@ public class SettingsServiceImpl implements SettingsService {
     private final UserSettingsMapper userSettingsMapper;
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public DomainResponses.UserSettingsResponse get() {
         return userSettingsMapper.toResponse(findOrCreate(currentUser()));
     }

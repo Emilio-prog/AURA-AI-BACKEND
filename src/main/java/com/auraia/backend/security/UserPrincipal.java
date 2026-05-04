@@ -27,6 +27,16 @@ public record UserPrincipal(
     }
 
     @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return authorities;
+    }
+
+    @Override
+    public String getPassword() {
+        return password;
+    }
+
+    @Override
     public String getUsername() {
         return email;
     }
@@ -43,6 +53,11 @@ public record UserPrincipal(
 
     @Override
     public boolean isCredentialsNonExpired() {
+        return enabled;
+    }
+
+    @Override
+    public boolean isEnabled() {
         return enabled;
     }
 }

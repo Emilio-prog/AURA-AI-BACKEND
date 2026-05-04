@@ -5,6 +5,7 @@ import com.auraia.backend.models.dto.response.AuthResponses;
 import com.auraia.backend.models.dto.response.UserResponses;
 import com.auraia.backend.services.user.UserService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/users")
+@ApiResponse(responseCode = "401", description = "Authentication required")
 public class UserController {
 
     private final UserService userService;
