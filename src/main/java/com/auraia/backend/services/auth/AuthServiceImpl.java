@@ -58,22 +58,24 @@ public class AuthServiceImpl implements AuthService {
         passwordPolicyValidator.validate(request.password());
 
         boolean admin = isConfiguredAdmin(email);
+        boolean emailVerified = admin || shouldAutoVerifyEmail();
         User user = User.builder()
             .email(email)
             .passwordHash(passwordEncoder.encode(request.password()))
             .name(request.name().trim())
             .role(admin ? Role.ADMIN : Role.USER)
             .plan(Plan.FREE)
-            .emailVerified(admin)
+            .emailVerified(emailVerified)
             .build();
         userRepository.save(user);
         createDefaultSettings(user);
 
-        if (!admin) {
+        if (!emailVerified) {
             createAndSendVerificationToken(user);
         }
 
-        return new AuthResponses.PendingVerificationResponse(email, message("auth.register.pending"));
+        String messageCode = emailVerified ? "auth.register.verified" : "auth.register.pending";
+        return new AuthResponses.PendingVerificationResponse(email, message(messageCode));
     }
 
     @Override
@@ -188,6 +190,10 @@ public class AuthServiceImpl implements AuthService {
         return properties.getAdminEmails().stream()
             .map(this::normalizeEmail)
             .anyMatch(email::equals);
+    }
+
+    private boolean shouldAutoVerifyEmail() {
+        return !properties.getEmail().isEnabled() && properties.getEmail().isAutoVerifyWhenDisabled();
     }
 
     private String normalizeEmail(String email) {

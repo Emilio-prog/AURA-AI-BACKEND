@@ -34,6 +34,7 @@ public class AppProperties {
     @Data
     public static class Email {
         private boolean enabled = true;
+        private boolean autoVerifyWhenDisabled = false;
         private String from = "no-reply@aura.ai";
         private long verificationTokenTtlHours = 24;
     }

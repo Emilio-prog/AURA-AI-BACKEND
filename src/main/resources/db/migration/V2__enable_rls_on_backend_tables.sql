@@ -1,0 +1,23 @@
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.refresh_tokens ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.email_verification_tokens ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.diary_entries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.mood_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.chat_sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.contacts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.panic_alerts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.panic_notification_results ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
+
+REVOKE ALL ON public.users FROM anon, authenticated;
+REVOKE ALL ON public.refresh_tokens FROM anon, authenticated;
+REVOKE ALL ON public.email_verification_tokens FROM anon, authenticated;
+REVOKE ALL ON public.user_settings FROM anon, authenticated;
+REVOKE ALL ON public.diary_entries FROM anon, authenticated;
+REVOKE ALL ON public.mood_logs FROM anon, authenticated;
+REVOKE ALL ON public.chat_sessions FROM anon, authenticated;
+REVOKE ALL ON public.contacts FROM anon, authenticated;
+REVOKE ALL ON public.panic_alerts FROM anon, authenticated;
+REVOKE ALL ON public.panic_notification_results FROM anon, authenticated;
+REVOKE ALL ON public.audit_logs FROM anon, authenticated;

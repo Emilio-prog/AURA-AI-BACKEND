@@ -8,7 +8,7 @@ Spring Boot backend for the AURA IA user panel. It owns authentication, PostgreS
 - Docker, only for Testcontainers integration tests
 - Supabase PostgreSQL connection string for dev/prod runtime
 
-This repository includes Maven Wrapper scripts. The wrapper downloads its own Maven runtime the first time it runs, but Java 21 still needs to be installed and available through `JAVA_HOME` or `PATH`.
+This repository includes Maven Wrapper scripts. The wrapper downloads its own Maven runtime the first time it runs. On this workstation it auto-detects the installed JDK 21 under `C:\Users\Usuario\.jdks\ms-21.0.10`.
 
 ## Configuration
 
@@ -20,8 +20,17 @@ Important variables:
 - `JWT_SECRET` as a base64 secret of at least 64 bytes decoded
 - `FRONTEND_BASE_URL`, used for email verification links
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM`
+- `EMAIL_ENABLED=false` and `EMAIL_AUTO_VERIFY_WHEN_DISABLED=true` for local dev login without SMTP
 - `AI_SERVICE_URL`, `AI_SERVICE_ENABLED`, `AI_SERVICE_TIMEOUT_MS`
 - `ADMIN_EMAILS`, comma-separated emails promoted to admin
+
+The Supabase project currently used for dev is `AURA-AI` (`aexcwfxhbiifvcxdgcxm`) with:
+
+```text
+jdbc:postgresql://db.aexcwfxhbiifvcxdgcxm.supabase.co:5432/postgres?sslmode=require
+```
+
+The public backend schema was applied to Supabase through MCP as migration `init_aura_backend_schema`. Flyway profiles use `baseline-on-migrate=true` so an already-migrated Supabase schema is not recreated at runtime.
 
 ## Run
 
@@ -50,11 +59,12 @@ GET /actuator/health
 ## Auth Flow
 
 1. `POST /api/v1/auth/register` creates the user and returns `202 Accepted`.
-2. A verification email is sent to `${FRONTEND_BASE_URL}/verify-email?token=...`.
-3. `POST /api/v1/auth/verify-email?token=...` verifies the account.
-4. `POST /api/v1/auth/login` returns `accessToken` and `refreshToken`.
-5. `POST /api/v1/auth/refresh` rotates the refresh token.
-6. `POST /api/v1/auth/logout` revokes the current refresh token.
+2. In prod, a verification email is sent to `${FRONTEND_BASE_URL}/verify-email?token=...`.
+3. In dev, if `EMAIL_ENABLED=false` and `EMAIL_AUTO_VERIFY_WHEN_DISABLED=true`, the account is verified immediately.
+4. `POST /api/v1/auth/verify-email?token=...` verifies the account when email verification is active.
+5. `POST /api/v1/auth/login` returns `accessToken` and `refreshToken`.
+6. `POST /api/v1/auth/refresh` rotates the refresh token.
+7. `POST /api/v1/auth/logout` revokes the current refresh token.
 
 Users cannot log in until email is verified. Passwords require 12 characters with uppercase, lowercase, number, and symbol.
 
