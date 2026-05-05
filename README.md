@@ -24,10 +24,11 @@ Important variables:
 - `AI_SERVICE_URL`, `AI_SERVICE_ENABLED`, `AI_SERVICE_TIMEOUT_MS`
 - `ADMIN_EMAILS`, comma-separated emails promoted to admin
 
-The Supabase project currently used for dev is `AURA-AI` (`aexcwfxhbiifvcxdgcxm`) with:
+The Supabase project currently used for dev is `AURA-AI` (`aexcwfxhbiifvcxdgcxm`). Local development uses the Supabase Session pooler because the direct DB host is IPv6-only in this project:
 
 ```text
-jdbc:postgresql://db.aexcwfxhbiifvcxdgcxm.supabase.co:5432/postgres?sslmode=require
+jdbc:postgresql://aws-1-eu-west-2.pooler.supabase.com:5432/postgres?sslmode=require
+username: postgres.aexcwfxhbiifvcxdgcxm
 ```
 
 The public backend schema was applied to Supabase through MCP as migration `init_aura_backend_schema`. Flyway profiles use `baseline-on-migrate=true` so an already-migrated Supabase schema is not recreated at runtime.
