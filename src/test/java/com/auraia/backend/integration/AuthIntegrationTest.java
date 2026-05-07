@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.auraia.backend.models.entities.User;
@@ -71,10 +72,23 @@ class AuthIntegrationTest {
                       "password": "%s"
                     }
                     """.formatted(email, password)))
-            .andExpect(status().isAccepted());
+            .andExpect(status().isAccepted())
+            .andExpect(jsonPath("$.requiresVerification").value(true));
 
         ArgumentCaptor<String> tokenCaptor = ArgumentCaptor.forClass(String.class);
         verify(verificationEmailService).sendVerificationEmail(any(User.class), tokenCaptor.capture());
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                .header("Accept-Language", "en")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "email": "%s",
+                      "password": "%s"
+                    }
+                    """.formatted(email, password)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.message").value("You must verify your email before signing in."));
 
         mockMvc.perform(post("/api/v1/auth/verify-email")
                 .param("token", tokenCaptor.getValue()))

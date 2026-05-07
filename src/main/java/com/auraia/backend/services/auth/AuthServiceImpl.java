@@ -75,7 +75,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         String messageCode = emailVerified ? "auth.register.verified" : "auth.register.pending";
-        return new AuthResponses.PendingVerificationResponse(email, message(messageCode));
+        return new AuthResponses.PendingVerificationResponse(email, message(messageCode), !emailVerified);
     }
 
     @Override

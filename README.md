@@ -20,7 +20,7 @@ Important variables:
 - `JWT_SECRET` as a base64 secret of at least 64 bytes decoded
 - `FRONTEND_BASE_URL`, used for email verification links
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM`
-- `EMAIL_ENABLED=false` and `EMAIL_AUTO_VERIFY_WHEN_DISABLED=true` for local dev login without SMTP
+- `EMAIL_ENABLED=true` and `EMAIL_AUTO_VERIFY_WHEN_DISABLED=false` for real email verification
 - `AI_SERVICE_URL`, `AI_SERVICE_ENABLED`, `AI_SERVICE_TIMEOUT_MS`
 - `ADMIN_EMAILS`, comma-separated emails promoted to admin
 
@@ -32,6 +32,22 @@ username: postgres.aexcwfxhbiifvcxdgcxm
 ```
 
 The public backend schema was applied to Supabase through MCP as migration `init_aura_backend_schema`. Flyway profiles use `baseline-on-migrate=true` so an already-migrated Supabase schema is not recreated at runtime.
+
+### Resend SMTP
+
+The recommended email provider is Resend through Spring Mail SMTP. Resend requires a verified sending domain before external recipients can receive verification emails.
+
+```text
+SMTP_HOST=smtp.resend.com
+SMTP_PORT=587
+SMTP_USERNAME=resend
+SMTP_PASSWORD=<resend-api-key>
+SMTP_AUTH=true
+SMTP_STARTTLS=true
+SMTP_FROM=AURA IA <no-reply@aura-ia.es>
+```
+
+Resend MCP is authenticated by API key. The configured sending domain is `aura-ia.es`; it must be `verified` in Resend before `EMAIL_ENABLED=true` is used in local or production runtime.
 
 ## Run
 
@@ -60,7 +76,7 @@ GET /actuator/health
 ## Auth Flow
 
 1. `POST /api/v1/auth/register` creates the user and returns `202 Accepted`.
-2. In prod, a verification email is sent to `${FRONTEND_BASE_URL}/verify-email?token=...`.
+2. In prod, a verification email is sent to `${FRONTEND_BASE_URL}/#/verify-email?token=...` for the current HashRouter frontend.
 3. In dev, if `EMAIL_ENABLED=false` and `EMAIL_AUTO_VERIFY_WHEN_DISABLED=true`, the account is verified immediately.
 4. `POST /api/v1/auth/verify-email?token=...` verifies the account when email verification is active.
 5. `POST /api/v1/auth/login` returns `accessToken` and `refreshToken`.

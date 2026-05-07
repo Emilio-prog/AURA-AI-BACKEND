@@ -14,7 +14,7 @@ public final class AuthResponses {
     ) {
     }
 
-    public record PendingVerificationResponse(String email, String message) {
+    public record PendingVerificationResponse(String email, String message, boolean requiresVerification) {
     }
 
     public record MessageResponse(String message) {
