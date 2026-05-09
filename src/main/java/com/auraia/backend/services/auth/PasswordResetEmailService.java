@@ -17,25 +17,25 @@ import org.springframework.web.util.UriUtils;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class VerificationEmailService {
+public class PasswordResetEmailService {
 
     private final JavaMailSender mailSender;
     private final AppProperties properties;
     private final HtmlEmailRenderer renderer;
 
-    public void sendVerificationEmail(User user, String rawToken) {
-        String link = verificationLink(rawToken);
+    public void sendResetEmail(User user, String rawToken) {
+        String link = resetLink(rawToken);
         if (!properties.getEmail().isEnabled()) {
-            log.info("Email disabled. Verification link generated for {}", user.getEmail());
+            log.info("Email disabled. Reset link generated for {}", user.getEmail());
             return;
         }
 
-        String subject = "Verifica tu cuenta de AURA IA";
-        String html = renderer.render("email/verify", Map.of(
+        String subject = "Recupera tu contrasena de AURA IA";
+        String html = renderer.render("email/reset-password", Map.of(
             "subject", subject,
-            "badge", "ID: VERIFICACION_EMAIL",
-            "title", "VERIFICA_TU_CUENTA",
-            "subtitle", "// ACTIVACION_USUARIO",
+            "badge", "ID: RESET_CONTRASENA",
+            "title", "RECUPERA_ACCESO",
+            "subtitle", "// SOLICITUD_RESET_CREDENCIAL",
             "name", user.getName(),
             "actionUrl", link
         ));
@@ -48,16 +48,16 @@ public class VerificationEmailService {
             helper.setSubject(subject);
             helper.setText(html, true);
             mailSender.send(message);
-            log.info("Verification email sent to {}", user.getEmail());
+            log.info("Password reset email sent to {}", user.getEmail());
         } catch (MailException | MessagingException ex) {
-            log.error("Verification email could not be sent to {}", user.getEmail(), ex);
-            throw new IllegalStateException("Verification email failed", ex);
+            log.error("Password reset email could not be sent to {}", user.getEmail(), ex);
+            throw new IllegalStateException("Password reset email failed", ex);
         }
     }
 
-    private String verificationLink(String rawToken) {
+    private String resetLink(String rawToken) {
         String frontendBaseUrl = properties.getFrontendBaseUrl().replaceAll("/+$", "");
         String encodedToken = UriUtils.encode(rawToken, StandardCharsets.UTF_8);
-        return frontendBaseUrl + "/#/verify-email?token=" + encodedToken;
+        return frontendBaseUrl + "/#/reset-password?token=" + encodedToken;
     }
 }

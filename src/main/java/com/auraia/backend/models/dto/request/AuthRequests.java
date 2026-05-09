@@ -30,4 +30,13 @@ public final class AuthRequests {
 
     public record ResendVerificationRequest(@NotBlank @Email @Size(max = 320) String email) {
     }
+
+    public record ForgotPasswordRequest(@NotBlank @Email @Size(max = 320) String email) {
+    }
+
+    public record ResetPasswordRequest(
+        @NotBlank String token,
+        @NotBlank @Size(min = 12, max = 128) String password
+    ) {
+    }
 }

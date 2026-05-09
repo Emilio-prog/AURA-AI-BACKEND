@@ -37,6 +37,7 @@ public class AppProperties {
         private boolean autoVerifyWhenDisabled = false;
         private String from = "no-reply@aura.ai";
         private long verificationTokenTtlHours = 24;
+        private long passwordResetTokenTtlMinutes = 30;
     }
 
     @Data

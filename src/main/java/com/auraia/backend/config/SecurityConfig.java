@@ -54,7 +54,9 @@ public class SecurityConfig {
                     "/api/v1/auth/refresh",
                     "/api/v1/auth/logout",
                     "/api/v1/auth/verify-email",
-                    "/api/v1/auth/resend-verification").permitAll()
+                    "/api/v1/auth/resend-verification",
+                    "/api/v1/auth/forgot-password",
+                    "/api/v1/auth/reset-password").permitAll()
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated())
             .addFilterBefore(authRateLimitFilter, UsernamePasswordAuthenticationFilter.class)

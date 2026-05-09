@@ -62,6 +62,18 @@ public class AuthController {
         return authService.resendVerification(request);
     }
 
+    @Operation(summary = "Request a password reset email")
+    @PostMapping("/forgot-password")
+    public AuthResponses.MessageResponse forgotPassword(@Valid @RequestBody AuthRequests.ForgotPasswordRequest request) {
+        return authService.forgotPassword(request);
+    }
+
+    @Operation(summary = "Reset password using a reset token")
+    @PostMapping("/reset-password")
+    public AuthResponses.MessageResponse resetPassword(@Valid @RequestBody AuthRequests.ResetPasswordRequest request) {
+        return authService.resetPassword(request);
+    }
+
     @Operation(summary = "Return authenticated user")
     @GetMapping("/me")
     public UserResponses.UserResponse me() {

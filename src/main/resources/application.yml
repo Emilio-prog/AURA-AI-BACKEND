@@ -80,6 +80,7 @@ app:
     auto-verify-when-disabled: ${EMAIL_AUTO_VERIFY_WHEN_DISABLED:false}
     from: ${SMTP_FROM:no-reply@aura.ai}
     verification-token-ttl-hours: ${EMAIL_VERIFICATION_TTL_HOURS:24}
+    password-reset-token-ttl-minutes: ${PASSWORD_RESET_TTL_MINUTES:30}
   ai:
     service-url: ${AI_SERVICE_URL:http://localhost:8000}
     enabled: ${AI_SERVICE_ENABLED:false}
