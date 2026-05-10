@@ -45,6 +45,8 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final VerificationEmailService verificationEmailService;
     private final PasswordResetEmailService passwordResetEmailService;
+    private final WelcomeEmailService welcomeEmailService;
+    private final TurnstileService turnstileService;
     private final PasswordPolicyValidator passwordPolicyValidator;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
@@ -55,6 +57,9 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public AuthResponses.PendingVerificationResponse register(AuthRequests.RegisterRequest request) {
+        if (!turnstileService.verify(request.captchaToken(), null)) {
+            throw new BusinessException("error.captcha_invalid");
+        }
         String email = normalizeEmail(request.email());
         if (userRepository.existsByEmailIgnoreCase(email)) {
             throw new BusinessException("error.email_in_use");
@@ -131,9 +136,11 @@ public class AuthServiceImpl implements AuthService {
             throw new BusinessException("error.invalid_token");
         }
         verificationToken.setConsumedAt(Instant.now());
-        verificationToken.getUser().setEmailVerified(true);
+        User verifiedUser = verificationToken.getUser();
+        verifiedUser.setEmailVerified(true);
         verificationTokenRepository.save(verificationToken);
-        userRepository.save(verificationToken.getUser());
+        userRepository.save(verifiedUser);
+        welcomeEmailService.sendWelcomeEmail(verifiedUser);
         return new AuthResponses.MessageResponse(message("auth.email.verified"));
     }
 
@@ -149,6 +156,9 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public AuthResponses.MessageResponse forgotPassword(AuthRequests.ForgotPasswordRequest request) {
+        if (!turnstileService.verify(request.captchaToken(), null)) {
+            throw new BusinessException("error.captcha_invalid");
+        }
         userRepository.findByEmailIgnoreCaseAndDeletedAtIsNull(normalizeEmail(request.email()))
             .ifPresent(this::createAndSendPasswordResetToken);
         return new AuthResponses.MessageResponse(message("auth.password_reset.requested"));

@@ -88,3 +88,10 @@ app:
   rate-limit:
     auth-capacity: ${AUTH_RATE_LIMIT_CAPACITY:5}
     auth-refill-minutes: ${AUTH_RATE_LIMIT_REFILL_MINUTES:1}
+  webhook:
+    resend-secret: ${RESEND_WEBHOOK_SECRET:}
+  turnstile:
+    enabled: ${TURNSTILE_ENABLED:false}
+    site-key: ${TURNSTILE_SITE_KEY:}
+    secret-key: ${TURNSTILE_SECRET_KEY:}
+    timeout-ms: ${TURNSTILE_TIMEOUT_MS:4000}

@@ -17,6 +17,8 @@ public class AppProperties {
     private Email email = new Email();
     private Ai ai = new Ai();
     private RateLimit rateLimit = new RateLimit();
+    private Webhook webhook = new Webhook();
+    private Turnstile turnstile = new Turnstile();
     private DevDemoUser devDemoUser = new DevDemoUser();
 
     @Data
@@ -51,6 +53,19 @@ public class AppProperties {
     public static class RateLimit {
         private long authCapacity = 5;
         private long authRefillMinutes = 1;
+    }
+
+    @Data
+    public static class Webhook {
+        private String resendSecret;
+    }
+
+    @Data
+    public static class Turnstile {
+        private boolean enabled = false;
+        private String siteKey;
+        private String secretKey;
+        private int timeoutMs = 4000;
     }
 
     @Data

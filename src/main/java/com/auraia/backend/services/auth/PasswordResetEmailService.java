@@ -22,6 +22,7 @@ public class PasswordResetEmailService {
     private final JavaMailSender mailSender;
     private final AppProperties properties;
     private final HtmlEmailRenderer renderer;
+    private final EmailDeliveryService emailDeliveryService;
 
     public void sendResetEmail(User user, String rawToken) {
         String link = resetLink(rawToken);
@@ -29,13 +30,15 @@ public class PasswordResetEmailService {
             log.info("Email disabled. Reset link generated for {}", user.getEmail());
             return;
         }
+        if (emailDeliveryService.isSuppressed(user.getEmail())) {
+            log.warn("Skipping password reset email: recipient suppressed ({})", user.getEmail());
+            return;
+        }
 
-        String subject = "Recupera tu contrasena de AURA IA";
+        String subject = "Restablece tu contraseña de AURA IA";
         String html = renderer.render("email/reset-password", Map.of(
             "subject", subject,
-            "badge", "ID: RESET_CONTRASENA",
-            "title", "RECUPERA_ACCESO",
-            "subtitle", "// SOLICITUD_RESET_CREDENCIAL",
+            "title", "Restablece tu contraseña",
             "name", user.getName(),
             "actionUrl", link
         ));

@@ -49,7 +49,10 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
             return false;
         }
         String path = request.getRequestURI();
-        return path.endsWith("/api/v1/auth/login") || path.endsWith("/api/v1/auth/register");
+        return path.endsWith("/api/v1/auth/login")
+            || path.endsWith("/api/v1/auth/register")
+            || path.endsWith("/api/v1/auth/forgot-password")
+            || path.endsWith("/api/v1/auth/resend-verification");
     }
 
     private Bucket newBucket() {

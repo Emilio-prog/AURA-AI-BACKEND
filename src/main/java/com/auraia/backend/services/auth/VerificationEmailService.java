@@ -22,6 +22,7 @@ public class VerificationEmailService {
     private final JavaMailSender mailSender;
     private final AppProperties properties;
     private final HtmlEmailRenderer renderer;
+    private final EmailDeliveryService emailDeliveryService;
 
     public void sendVerificationEmail(User user, String rawToken) {
         String link = verificationLink(rawToken);
@@ -29,13 +30,15 @@ public class VerificationEmailService {
             log.info("Email disabled. Verification link generated for {}", user.getEmail());
             return;
         }
+        if (emailDeliveryService.isSuppressed(user.getEmail())) {
+            log.warn("Skipping verification email: recipient suppressed ({})", user.getEmail());
+            return;
+        }
 
         String subject = "Verifica tu cuenta de AURA IA";
         String html = renderer.render("email/verify", Map.of(
             "subject", subject,
-            "badge", "ID: VERIFICACION_EMAIL",
-            "title", "VERIFICA_TU_CUENTA",
-            "subtitle", "// ACTIVACION_USUARIO",
+            "title", "Verifica tu correo",
             "name", user.getName(),
             "actionUrl", link
         ));
