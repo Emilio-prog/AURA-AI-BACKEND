@@ -18,5 +18,9 @@ public interface AuthService {
 
     AuthResponses.MessageResponse resendVerification(AuthRequests.ResendVerificationRequest request);
 
+    AuthResponses.MessageResponse forgotPassword(AuthRequests.ForgotPasswordRequest request);
+
+    AuthResponses.MessageResponse resetPassword(AuthRequests.ResetPasswordRequest request);
+
     UserResponses.UserResponse me();
 }

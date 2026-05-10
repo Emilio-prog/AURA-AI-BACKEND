@@ -12,7 +12,8 @@ public final class AuthRequests {
     public record RegisterRequest(
         @NotBlank @Size(min = 2, max = 160) String name,
         @NotBlank @Email @Size(max = 320) String email,
-        @NotBlank @Size(min = 12, max = 128) String password
+        @NotBlank @Size(min = 12, max = 128) String password,
+        String captchaToken
     ) {
     }
 
@@ -29,5 +30,17 @@ public final class AuthRequests {
     }
 
     public record ResendVerificationRequest(@NotBlank @Email @Size(max = 320) String email) {
+    }
+
+    public record ForgotPasswordRequest(
+        @NotBlank @Email @Size(max = 320) String email,
+        String captchaToken
+    ) {
+    }
+
+    public record ResetPasswordRequest(
+        @NotBlank String token,
+        @NotBlank @Size(min = 12, max = 128) String password
+    ) {
     }
 }

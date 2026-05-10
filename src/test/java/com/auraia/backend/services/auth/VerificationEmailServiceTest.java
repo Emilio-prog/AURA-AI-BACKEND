@@ -2,6 +2,9 @@ package com.auraia.backend.services.auth;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -18,9 +21,16 @@ import org.springframework.mail.javamail.JavaMailSender;
 
 class VerificationEmailServiceTest {
 
-    private final JavaMailSender mailSender = org.mockito.Mockito.mock(JavaMailSender.class);
+    private final JavaMailSender mailSender = mock(JavaMailSender.class);
     private final AppProperties properties = new AppProperties();
-    private final VerificationEmailService service = new VerificationEmailService(mailSender, properties);
+    private final HtmlEmailRenderer renderer = mock(HtmlEmailRenderer.class);
+    private final EmailDeliveryService emailDeliveryService = mock(EmailDeliveryService.class);
+    private final VerificationEmailService service = new VerificationEmailService(
+        mailSender,
+        properties,
+        renderer,
+        emailDeliveryService
+    );
 
     @Test
     void sendsHashRouterVerificationLinkForFrontend() throws Exception {
@@ -29,12 +39,20 @@ class VerificationEmailServiceTest {
         properties.getEmail().setFrom("AURA IA <no-reply@example.com>");
         MimeMessage mimeMessage = new MimeMessage((Session) null);
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        when(renderer.render(anyString(), anyMap())).thenReturn("<html><body>Hola Maria, Verificar cuenta</body></html>");
 
         service.sendVerificationEmail(User.builder().email("maria@example.com").name("Maria No Alt").build(), "abc token");
 
-        ArgumentCaptor<MimeMessage> captor = ArgumentCaptor.forClass(MimeMessage.class);
-        verify(mailSender).send(captor.capture());
-        MimeMessage message = captor.getValue();
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<java.util.Map<String, Object>> varsCaptor = ArgumentCaptor.forClass(java.util.Map.class);
+        verify(renderer).render(anyString(), varsCaptor.capture());
+        assertThat(varsCaptor.getValue().get("actionUrl"))
+            .isEqualTo("http://localhost:5173/#/verify-email?token=abc%20token");
+        assertThat(varsCaptor.getValue().get("name")).isEqualTo("Maria");
+
+        ArgumentCaptor<MimeMessage> messageCaptor = ArgumentCaptor.forClass(MimeMessage.class);
+        verify(mailSender).send(messageCaptor.capture());
+        MimeMessage message = messageCaptor.getValue();
 
         assertThat(message.getFrom()[0].toString()).isEqualTo("AURA IA <no-reply@example.com>");
         assertThat(message.getAllRecipients()[0].toString()).isEqualTo("maria@example.com");
@@ -51,8 +69,9 @@ class VerificationEmailServiceTest {
     void doesNotSendWhenEmailIsDisabled() {
         properties.getEmail().setEnabled(false);
 
-        service.sendVerificationEmail(User.builder().email("maria@example.com").build(), "raw-token");
+        service.sendVerificationEmail(User.builder().email("maria@example.com").name("Maria").build(), "raw-token");
 
+        verify(emailDeliveryService, never()).isSuppressed(anyString());
         verify(mailSender, never()).createMimeMessage();
         verify(mailSender, never()).send(any(MimeMessage.class));
     }
