@@ -49,6 +49,8 @@ SMTP_FROM=AURA IA <no-reply@aura-ia.es>
 
 Resend MCP is authenticated by API key. The configured sending domain is `aura-ia.es`; it must be `verified` in Resend before `EMAIL_ENABLED=true` is used in local or production runtime.
 
+Verification emails are sent as HTML with a plain-text fallback. The HTML template includes the AURA IA brand block, a primary verification button, and a short security note.
+
 ## Run
 
 ```bash

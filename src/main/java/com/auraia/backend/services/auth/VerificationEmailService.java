@@ -9,9 +9,11 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.MailException;
+import org.springframework.mail.MailPreparationException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.util.UriUtils;
 
 @Slf4j
@@ -39,22 +41,30 @@ public class VerificationEmailService {
         String html = renderer.render("email/verify", Map.of(
             "subject", subject,
             "title", "Verifica tu correo",
-            "name", user.getName(),
-            "actionUrl", link
+            "name", greetingName(user),
+            "actionUrl", link,
+            "ttlHours", properties.getEmail().getVerificationTokenTtlHours()
         ));
 
         try {
             MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, false, StandardCharsets.UTF_8.name());
+            MimeMessageHelper helper = new MimeMessageHelper(
+                message,
+                MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED,
+                StandardCharsets.UTF_8.name()
+            );
             helper.setFrom(properties.getEmail().getFrom());
             helper.setTo(user.getEmail());
             helper.setSubject(subject);
-            helper.setText(html, true);
+            helper.setText(plainText(link), html);
             mailSender.send(message);
             log.info("Verification email sent to {}", user.getEmail());
-        } catch (MailException | MessagingException ex) {
-            log.error("Verification email could not be sent to {}", user.getEmail(), ex);
-            throw new IllegalStateException("Verification email failed", ex);
+        } catch (MessagingException ex) {
+            log.error("Verification email could not be prepared for {}", user.getEmail());
+            throw new MailPreparationException("Verification email could not be prepared", ex);
+        } catch (MailException ex) {
+            log.error("Verification email could not be sent to {}", user.getEmail());
+            throw ex;
         }
     }
 
@@ -62,5 +72,24 @@ public class VerificationEmailService {
         String frontendBaseUrl = properties.getFrontendBaseUrl().replaceAll("/+$", "");
         String encodedToken = UriUtils.encode(rawToken, StandardCharsets.UTF_8);
         return frontendBaseUrl + "/#/verify-email?token=" + encodedToken;
+    }
+
+    private String plainText(String link) {
+        return """
+            Hola,
+
+            Bienvenido a AURA IA. Verifica tu email abriendo este enlace:
+
+            %s
+
+            Este enlace caduca en %d horas. Si no has creado esta cuenta, puedes ignorar este mensaje.
+            """.formatted(link, properties.getEmail().getVerificationTokenTtlHours());
+    }
+
+    private String greetingName(User user) {
+        if (!StringUtils.hasText(user.getName())) {
+            return "AURA";
+        }
+        return user.getName().trim().split("\\s+")[0];
     }
 }
