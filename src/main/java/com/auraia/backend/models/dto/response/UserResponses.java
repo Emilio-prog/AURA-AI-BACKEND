@@ -19,7 +19,8 @@ public final class UserResponses {
         Role role,
         Plan plan,
         boolean emailVerified,
-        Instant createdAt
+        Instant createdAt,
+        Instant onboardedAt
     ) {
     }
 
@@ -32,6 +33,7 @@ public final class UserResponses {
         boolean emailVerified,
         Instant createdAt,
         Instant updatedAt,
+        Instant onboardedAt,
         Instant deletedAt
     ) {
     }

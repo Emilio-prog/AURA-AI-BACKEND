@@ -8,11 +8,15 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Getter
 @Setter
@@ -42,6 +46,18 @@ public class User extends AuditedEntity {
 
     @Column(nullable = false)
     private boolean emailVerified;
+
+    private Instant onboardedAt;
+
+    private Instant onboardingConsentAt;
+
+    @Column(length = 120)
+    private String onboardingConsentVersion;
+
+    @Builder.Default
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(nullable = false, columnDefinition = "jsonb")
+    private Map<String, Object> onboardingProfile = new LinkedHashMap<>();
 
     private Instant deletedAt;
 

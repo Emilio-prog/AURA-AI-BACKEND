@@ -10,6 +10,8 @@ public interface UserService {
 
     UserResponses.UserResponse updateCurrentProfile(UserRequests.UpdateUserRequest request);
 
+    UserResponses.UserResponse completeOnboarding(UserRequests.CompleteOnboardingRequest request);
+
     AuthResponses.MessageResponse changePassword(UserRequests.ChangePasswordRequest request);
 
     AuthResponses.MessageResponse deleteCurrentAccount();
