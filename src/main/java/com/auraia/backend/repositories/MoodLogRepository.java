@@ -9,6 +9,7 @@ import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 public interface MoodLogRepository extends JpaRepository<MoodLog, UUID> {
 
@@ -17,6 +18,11 @@ public interface MoodLogRepository extends JpaRepository<MoodLog, UUID> {
     List<MoodLog> findByUserAndLoggedAtBetweenOrderByLoggedAtAsc(User user, Instant start, Instant end);
 
     Optional<MoodLog> findByIdAndUser(UUID id, User user);
+
+    long countByUser(User user);
+
+    @Query("select m.loggedAt from MoodLog m where m.user = :user")
+    List<Instant> findLoggedAtByUser(User user);
 
     void deleteAllByUser(User user);
 }

@@ -1,6 +1,7 @@
 package com.auraia.backend.services;
 
 import com.auraia.backend.models.entities.User;
+import com.auraia.backend.repositories.AchievementEventRepository;
 import com.auraia.backend.repositories.ChatSessionRepository;
 import com.auraia.backend.repositories.ContactRepository;
 import com.auraia.backend.repositories.DiaryEntryRepository;
@@ -8,6 +9,7 @@ import com.auraia.backend.repositories.EmailVerificationTokenRepository;
 import com.auraia.backend.repositories.MoodLogRepository;
 import com.auraia.backend.repositories.PanicAlertRepository;
 import com.auraia.backend.repositories.RefreshTokenRepository;
+import com.auraia.backend.repositories.UserAchievementRepository;
 import com.auraia.backend.repositories.UserRepository;
 import com.auraia.backend.repositories.UserSettingsRepository;
 import java.time.Instant;
@@ -27,6 +29,8 @@ public class UserDeletionService {
     private final ChatSessionRepository chatSessionRepository;
     private final ContactRepository contactRepository;
     private final PanicAlertRepository panicAlertRepository;
+    private final AchievementEventRepository achievementEventRepository;
+    private final UserAchievementRepository userAchievementRepository;
 
     public void anonymizeAndSoftDelete(User user) {
         refreshTokenRepository.deleteAllByUser(user);
@@ -37,6 +41,8 @@ public class UserDeletionService {
         chatSessionRepository.deleteAllByUser(user);
         contactRepository.deleteAllByUser(user);
         panicAlertRepository.deleteAllByUser(user);
+        achievementEventRepository.deleteAllByUser(user);
+        userAchievementRepository.deleteAllByUser(user);
 
         user.setDeletedAt(Instant.now());
         user.setEmail("deleted-" + user.getId() + "@deleted.local");

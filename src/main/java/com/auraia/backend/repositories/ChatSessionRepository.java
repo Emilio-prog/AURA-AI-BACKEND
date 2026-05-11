@@ -14,5 +14,7 @@ public interface ChatSessionRepository extends JpaRepository<ChatSession, UUID> 
 
     Optional<ChatSession> findByIdAndUser(UUID id, User user);
 
+    long countByUser(User user);
+
     void deleteAllByUser(User user);
 }
