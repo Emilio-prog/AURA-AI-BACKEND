@@ -47,7 +47,7 @@ public class DevDataSeeder implements CommandLineRunner {
                 .passwordHash(passwordEncoder.encode(password))
                 .name("Maria Solis")
                 .role(isAdmin(email) ? Role.ADMIN : Role.USER)
-                .plan(Plan.PRO)
+                .plan(Plan.PERSONAL)
                 .emailVerified(true)
                 .build();
             User saved = userRepository.save(user);

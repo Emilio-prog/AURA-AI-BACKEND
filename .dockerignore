@@ -1,0 +1,12 @@
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+target
+logs
+*.log
+.mvn/maven-repository
+Dockerfile
+README.md
+docs

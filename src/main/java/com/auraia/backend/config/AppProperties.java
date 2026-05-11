@@ -18,6 +18,7 @@ public class AppProperties {
     private Ai ai = new Ai();
     private RateLimit rateLimit = new RateLimit();
     private Webhook webhook = new Webhook();
+    private Billing billing = new Billing();
     private Turnstile turnstile = new Turnstile();
     private DevDemoUser devDemoUser = new DevDemoUser();
 
@@ -58,6 +59,15 @@ public class AppProperties {
     @Data
     public static class Webhook {
         private String resendSecret;
+        private String stripeSecret;
+    }
+
+    @Data
+    public static class Billing {
+        private String stripeSecretKey;
+        private String personalPriceId;
+        private String premiumPriceId;
+        private String portalConfigurationId;
     }
 
     @Data

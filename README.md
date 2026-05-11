@@ -75,6 +75,36 @@ Healthcheck:
 GET /actuator/health
 ```
 
+### Stripe Billing Webhooks
+
+Checkout can open from local development, but Stripe cannot call `localhost` directly after payment. To make plan changes sync locally, start the full dev stack from the repository root with:
+
+```powershell
+.\start-dev.ps1 -StripeWebhook
+```
+
+That command reads `STRIPE_SECRET_KEY`, obtains the local Stripe CLI webhook signing secret, injects it into the backend process as `STRIPE_WEBHOOK_SECRET`, and forwards Stripe events to:
+
+```text
+http://localhost:8080/api/v1/webhooks/stripe
+```
+
+If Stripe CLI is not installed, the script falls back to Docker Desktop and runs the official `stripe/stripe-cli` image. Stop everything with:
+
+```powershell
+.\start-dev.ps1 -Stop
+```
+
+Production must use a real public backend URL, currently expected as:
+
+```text
+https://api.aura-ia.es/api/v1/webhooks/stripe
+```
+
+Use the Dashboard webhook signing secret for production/Dokploy, and the local listener secret only for local runs.
+
+Production deployment details are tracked in [`docs/stripe-production.md`](docs/stripe-production.md).
+
 ## Auth Flow
 
 1. `POST /api/v1/auth/register` creates the user and returns `202 Accepted`.
