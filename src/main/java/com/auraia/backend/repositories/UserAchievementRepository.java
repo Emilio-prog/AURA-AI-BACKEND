@@ -14,5 +14,7 @@ public interface UserAchievementRepository extends JpaRepository<UserAchievement
 
     Optional<UserAchievement> findByUserAndCode(User user, AchievementCode code);
 
+    List<UserAchievement> findByUserOrderByUnlockedAtAsc(User user);
+
     void deleteAllByUser(User user);
 }

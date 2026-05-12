@@ -1,6 +1,7 @@
 package com.auraia.backend.repositories;
 
 import com.auraia.backend.models.entities.User;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,6 +13,8 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByEmailIgnoreCaseAndDeletedAtIsNull(String email);
 
     Optional<User> findByIdAndDeletedAtIsNull(UUID id);
+
+    List<User> findByDeletedAtIsNullAndOnboardedAtIsNotNull();
 
     boolean existsByEmailIgnoreCase(String email);
 }

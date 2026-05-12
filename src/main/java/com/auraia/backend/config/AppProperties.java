@@ -21,6 +21,7 @@ public class AppProperties {
     private Billing billing = new Billing();
     private Turnstile turnstile = new Turnstile();
     private ContentEncryption contentEncryption = new ContentEncryption();
+    private WebPush webPush = new WebPush();
     private DevDemoUser devDemoUser = new DevDemoUser();
 
     @Data
@@ -86,6 +87,17 @@ public class AppProperties {
     public static class ContentEncryption {
         private String key;
         private boolean required = false;
+    }
+
+    @Data
+    public static class WebPush {
+        private boolean enabled = false;
+        private boolean schedulerEnabled = true;
+        private String vapidPublicKey;
+        private String vapidPrivateKey;
+        private String subject = "mailto:hola@aura-ia.es";
+        private String diaryReminderTime = "21:30";
+        private long schedulerFixedDelayMs = 60000;
     }
 
     @Data
