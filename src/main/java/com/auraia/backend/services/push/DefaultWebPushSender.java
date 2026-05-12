@@ -7,13 +7,16 @@ import com.auraia.backend.services.privacy.ContentCryptoService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.Security;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import nl.martijndwars.webpush.Encoding;
 import nl.martijndwars.webpush.Notification;
 import nl.martijndwars.webpush.PushService;
 import org.apache.http.HttpResponse;
+import org.apache.http.util.EntityUtils;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.springframework.stereotype.Service;
 
@@ -56,12 +59,14 @@ public class DefaultWebPushSender implements WebPushSender {
                 cryptoService.decrypt(user.getId(), "push.auth", subscription.getAuthSecret()),
                 payloadJson
             );
-            HttpResponse response = pushService.send(notification);
+            HttpResponse response = pushService.send(notification, Encoding.AES128GCM);
             int status = response.getStatusLine().getStatusCode();
             if (status >= 200 && status < 300) {
                 return WebPushSendResult.success(status);
             }
-            return WebPushSendResult.failure(status, response.getStatusLine().getReasonPhrase());
+            String errorMessage = responseErrorMessage(response);
+            log.warn("Web push provider rejected subscription {} with status {}: {}", subscription.getId(), status, errorMessage);
+            return WebPushSendResult.failure(status, errorMessage);
         } catch (JsonProcessingException ex) {
             throw new IllegalStateException("Unable to serialize web push payload", ex);
         } catch (Exception ex) {
@@ -72,5 +77,21 @@ public class DefaultWebPushSender implements WebPushSender {
 
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
+    }
+
+    private String responseErrorMessage(HttpResponse response) {
+        String reason = response.getStatusLine().getReasonPhrase();
+        try {
+            if (response.getEntity() == null) {
+                return reason;
+            }
+            String body = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
+            if (body == null || body.isBlank()) {
+                return reason;
+            }
+            return reason + ": " + body;
+        } catch (Exception ex) {
+            return reason;
+        }
     }
 }
