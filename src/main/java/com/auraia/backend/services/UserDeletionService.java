@@ -12,6 +12,8 @@ import com.auraia.backend.repositories.RefreshTokenRepository;
 import com.auraia.backend.repositories.UserAchievementRepository;
 import com.auraia.backend.repositories.UserRepository;
 import com.auraia.backend.repositories.UserSettingsRepository;
+import com.auraia.backend.repositories.WebPushDeliveryRepository;
+import com.auraia.backend.repositories.WebPushSubscriptionRepository;
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -31,6 +33,8 @@ public class UserDeletionService {
     private final PanicAlertRepository panicAlertRepository;
     private final AchievementEventRepository achievementEventRepository;
     private final UserAchievementRepository userAchievementRepository;
+    private final WebPushDeliveryRepository webPushDeliveryRepository;
+    private final WebPushSubscriptionRepository webPushSubscriptionRepository;
 
     public void anonymizeAndSoftDelete(User user) {
         refreshTokenRepository.deleteAllByUser(user);
@@ -43,6 +47,8 @@ public class UserDeletionService {
         panicAlertRepository.deleteAllByUser(user);
         achievementEventRepository.deleteAllByUser(user);
         userAchievementRepository.deleteAllByUser(user);
+        webPushDeliveryRepository.deleteAllByUser(user);
+        webPushSubscriptionRepository.deleteAllByUser(user);
 
         user.setDeletedAt(Instant.now());
         user.setEmail("deleted-" + user.getId() + "@deleted.local");

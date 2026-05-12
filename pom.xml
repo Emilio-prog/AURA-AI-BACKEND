@@ -25,6 +25,10 @@
         <bucket4j.version>8.15.0</bucket4j.version>
         <springdoc.version>2.6.0</springdoc.version>
         <stripe-java.version>32.1.0</stripe-java.version>
+        <web-push.version>5.1.2</web-push.version>
+        <httpclient.version>4.5.14</httpclient.version>
+        <bcprov.version>1.78.1</bcprov.version>
+        <jose4j.version>0.7.9</jose4j.version>
     </properties>
 
     <dependencies>
@@ -112,6 +116,26 @@
             <groupId>com.stripe</groupId>
             <artifactId>stripe-java</artifactId>
             <version>${stripe-java.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>nl.martijndwars</groupId>
+            <artifactId>web-push</artifactId>
+            <version>${web-push.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>${httpclient.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk18on</artifactId>
+            <version>${bcprov.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.bitbucket.b_c</groupId>
+            <artifactId>jose4j</artifactId>
+            <version>${jose4j.version}</version>
         </dependency>
 
         <dependency>

@@ -21,6 +21,8 @@ public interface DiaryEntryRepository extends JpaRepository<DiaryEntry, UUID> {
 
     long countByUser(User user);
 
+    boolean existsByUserAndCreatedAtBetween(User user, Instant start, Instant end);
+
     @Query("select d.createdAt from DiaryEntry d where d.user = :user")
     List<Instant> findCreatedAtByUser(User user);
 

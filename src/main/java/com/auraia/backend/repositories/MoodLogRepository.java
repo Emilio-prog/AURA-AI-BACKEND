@@ -21,6 +21,8 @@ public interface MoodLogRepository extends JpaRepository<MoodLog, UUID> {
 
     long countByUser(User user);
 
+    boolean existsByUserAndLoggedAtBetween(User user, Instant start, Instant end);
+
     @Query("select m.loggedAt from MoodLog m where m.user = :user")
     List<Instant> findLoggedAtByUser(User user);
 

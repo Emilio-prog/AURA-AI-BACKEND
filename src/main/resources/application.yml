@@ -107,3 +107,11 @@ app:
   content-encryption:
     key: ${CONTENT_ENCRYPTION_KEY:}
     required: ${CONTENT_ENCRYPTION_REQUIRED:false}
+  web-push:
+    enabled: ${WEB_PUSH_ENABLED:false}
+    scheduler-enabled: ${WEB_PUSH_SCHEDULER_ENABLED:true}
+    vapid-public-key: ${WEB_PUSH_VAPID_PUBLIC_KEY:}
+    vapid-private-key: ${WEB_PUSH_VAPID_PRIVATE_KEY:}
+    subject: ${WEB_PUSH_SUBJECT:mailto:hola@aura-ia.es}
+    diary-reminder-time: ${WEB_PUSH_DIARY_REMINDER_TIME:21:30}
+    scheduler-fixed-delay-ms: ${WEB_PUSH_SCHEDULER_FIXED_DELAY_MS:60000}
