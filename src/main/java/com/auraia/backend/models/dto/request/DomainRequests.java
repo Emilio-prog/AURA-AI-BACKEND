@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 
 public final class DomainRequests {
@@ -18,7 +19,8 @@ public final class DomainRequests {
         @Size(max = 180) String title,
         @NotBlank @Size(max = 20000) String content,
         @Min(1) @Max(10) Integer moodScore,
-        @Size(max = 80) String moodLabel
+        @Size(max = 80) String moodLabel,
+        List<@Size(min = 0, max = 80) String> tags
     ) {
     }
 

@@ -18,6 +18,7 @@ public final class DomainResponses {
         String content,
         Integer moodScore,
         String moodLabel,
+        List<String> tags,
         Instant createdAt,
         Instant updatedAt
     ) {

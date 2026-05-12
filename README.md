@@ -119,38 +119,64 @@ Users cannot log in until email is verified. Passwords require 12 characters wit
 
 ## AI Service Contract
 
-The backend uses Spring `RestClient`. When `AI_SERVICE_ENABLED=false`, or when the service is unavailable, it returns deterministic Spanish mock responses.
+The backend integrates Gemini directly from Spring Boot through `RestClient`; there is no Python/FastAPI service in the current architecture. Runtime behavior is controlled by:
 
-Future Python service endpoints:
+```text
+AI_SERVICE_ENABLED=true
+GEMINI_API_KEY=<google-ai-studio-api-key>
+GEMINI_MODEL=gemini-flash-latest
+AI_MAX_HISTORY_MESSAGES=12
+AI_CHAT_RATE_LIMIT_CAPACITY=20
+AI_CHAT_RATE_LIMIT_REFILL_MINUTES=5
+```
+
+When `AI_SERVICE_ENABLED=false`, `GEMINI_API_KEY` is missing, Gemini is unavailable, or Gemini returns an invalid response, the backend returns a deterministic safe fallback instead of breaking the chat.
+
+Authenticated chat endpoints:
 
 ```http
-POST /analyze
-Content-Type: application/json
-
-{ "text": "..." }
+GET /api/v1/chatbot/sessions
+POST /api/v1/chatbot/sessions
+GET /api/v1/chatbot/sessions/{id}
+POST /api/v1/chatbot/sessions/{id}/messages
+DELETE /api/v1/chatbot/sessions/{id}
 ```
+
+Message request:
 
 ```json
-{ "sentiment": "negative", "score": 0.82, "emotions": ["anxiety", "sadness"] }
+{ "message": "Estoy nervioso hoy" }
 ```
 
-```http
-POST /chat
-Content-Type: application/json
-
-{ "history": [], "message": "..." }
-```
+Session response:
 
 ```json
 {
-  "reply": "Estoy contigo...",
-  "sentiment": "supportive",
-  "riskLevel": "low",
-  "emotions": ["anxiety"]
+  "id": "e5c679e7-366c-404a-a4ff-2c92992fd464",
+  "title": "Estoy nervioso hoy",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Estoy nervioso hoy",
+      "timestamp": "2026-05-12T09:06:24.790608500Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Estoy contigo. Probemos una respiracion breve...",
+      "timestamp": "2026-05-12T09:06:28.286856700Z",
+      "riskLevel": "low",
+      "emotions": ["anxiety"],
+      "sentiment": "supportive"
+    }
+  ],
+  "startedAt": "2026-05-12T09:06:24.548620Z",
+  "updatedAt": "2026-05-12T09:06:28.286856700Z"
 }
 ```
 
-Crisis/autolesion keywords in mock mode return a safety response referencing Spain `112` and `024`.
+Only the current message and the most recent messages from the same chat session are sent to Gemini. Diary entries, mood logs, onboarding data, contacts, billing data, and user profile details are not sent to Gemini.
+
+Safety rules are enforced before and after Gemini. Messages involving suicidal ideation, self-harm, harm to others, or immediate danger return a high-risk safety response that references Spain `112` and `024`. Normal anxiety, panic, sleep, or calming requests receive grounding and breathing support without emergency numbers.
 
 ## Tests
 

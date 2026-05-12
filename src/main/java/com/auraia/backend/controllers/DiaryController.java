@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -35,8 +36,10 @@ public class DiaryController {
     @GetMapping
     public PageResponse<DomainResponses.DiaryEntryResponse> list(@RequestParam(required = false) Instant from,
                                                                  @RequestParam(required = false) Instant to,
+                                                                 @RequestParam(name = "q", required = false) String query,
+                                                                 @RequestParam(required = false) List<String> tags,
                                                                  @PageableDefault(size = 20) Pageable pageable) {
-        return diaryService.list(from, to, pageable);
+        return diaryService.list(from, to, query, tags, pageable);
     }
 
     @Operation(summary = "Get diary entry")
