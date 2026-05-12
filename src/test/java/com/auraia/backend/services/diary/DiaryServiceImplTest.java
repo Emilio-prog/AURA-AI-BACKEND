@@ -5,11 +5,12 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.auraia.backend.config.AppProperties;
 import com.auraia.backend.exceptions.BusinessException;
-import com.auraia.backend.mappers.DiaryEntryMapper;
 import com.auraia.backend.models.dto.request.DomainRequests;
 import com.auraia.backend.models.dto.response.DomainResponses;
 import com.auraia.backend.models.entities.DiaryEntry;
@@ -19,9 +20,13 @@ import com.auraia.backend.models.enums.Role;
 import com.auraia.backend.repositories.DiaryEntryRepository;
 import com.auraia.backend.repositories.UserRepository;
 import com.auraia.backend.security.UserPrincipal;
+import com.auraia.backend.services.privacy.AesGcmContentCryptoService;
+import com.auraia.backend.services.privacy.TestContentCryptoService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -32,10 +37,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class DiaryServiceImplTest {
@@ -44,8 +53,6 @@ class DiaryServiceImplTest {
     DiaryEntryRepository diaryEntryRepository;
     @Mock
     UserRepository userRepository;
-    @Mock
-    DiaryEntryMapper diaryEntryMapper;
     @Mock
     EntityManager entityManager;
     @Mock
@@ -59,7 +66,7 @@ class DiaryServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        service = new DiaryServiceImpl(diaryEntryRepository, userRepository, diaryEntryMapper, entityManager);
+        service = new DiaryServiceImpl(diaryEntryRepository, userRepository, entityManager, new TestContentCryptoService());
         userId = UUID.randomUUID();
         user = User.builder()
             .email("emilio@example.com")
@@ -86,7 +93,6 @@ class DiaryServiceImplTest {
     @Test
     void createNormalizesTagsAndReturnsEmptyWhenMissing() {
         when(diaryEntryRepository.save(any(DiaryEntry.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(diaryEntryMapper.toResponse(any(DiaryEntry.class))).thenAnswer(invocation -> response(invocation.getArgument(0)));
 
         DomainResponses.DiaryEntryResponse response = service.create(new DomainRequests.DiaryEntryRequest(
             "Titulo",
@@ -127,6 +133,7 @@ class DiaryServiceImplTest {
 
     @Test
     void listWithQueryAndTagsUsesFullTextAndTagFilter() {
+        service = new DiaryServiceImpl(diaryEntryRepository, userRepository, entityManager, new TestContentCryptoService(true));
         DiaryEntry entry = DiaryEntry.builder()
             .user(user)
             .title("Respirar")
@@ -144,7 +151,6 @@ class DiaryServiceImplTest {
         when(dataQuery.setMaxResults(20)).thenReturn(dataQuery);
         when(dataQuery.getResultList()).thenReturn(List.of(entry));
         when(countQuery.getSingleResult()).thenReturn(1L);
-        when(diaryEntryMapper.toResponse(any(DiaryEntry.class))).thenAnswer(invocation -> response(invocation.getArgument(0)));
 
         DomainResponses.DiaryEntryResponse response = service.list(
             null,
@@ -158,24 +164,55 @@ class DiaryServiceImplTest {
         ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
         verify(entityManager).createNativeQuery(sqlCaptor.capture(), eq(DiaryEntry.class));
         assertThat(sqlCaptor.getValue())
+            .contains("d.search_tokens @> array[:queryToken0]::text[]")
             .contains("websearch_to_tsquery('spanish', :query)")
             .contains("d.tags @> array[:tag0, :tag1]::text[]")
             .contains("order by d.created_at desc");
         verify(dataQuery).setParameter("query", "respirar");
+        verify(dataQuery).setParameter("queryToken0", "token:respirar");
         verify(dataQuery).setParameter("tag0", "ansiedad");
         verify(dataQuery).setParameter("tag1", "sueño");
     }
 
-    private DomainResponses.DiaryEntryResponse response(DiaryEntry entry) {
-        return new DomainResponses.DiaryEntryResponse(
-            entry.getId(),
-            entry.getTitle(),
-            entry.getContent(),
-            entry.getMoodScore(),
-            entry.getMoodLabel(),
-            entry.getTags() == null ? List.of() : List.copyOf(entry.getTags()),
-            entry.getCreatedAt(),
-            entry.getUpdatedAt()
-        );
+    @Test
+    void listWithEncryptedEntriesDoesNotRewriteAlreadyProtectedRows() {
+        AesGcmContentCryptoService crypto = cryptoService();
+        service = new DiaryServiceImpl(diaryEntryRepository, userRepository, entityManager, crypto);
+        DiaryEntry entry = DiaryEntry.builder()
+            .user(user)
+            .title(crypto.encrypt(userId, "diary.title", "Titulo"))
+            .content(crypto.encrypt(userId, "diary.content", "Contenido"))
+            .moodLabel(crypto.encrypt(userId, "diary.mood-label", "CALMA"))
+            .tags(List.of("ansiedad"))
+            .searchTokens(crypto.searchTokens(userId, "Titulo", "Contenido"))
+            .build();
+        entry.setId(UUID.randomUUID());
+        entry.setCreatedAt(Instant.parse("2026-05-12T09:00:00Z"));
+        when(diaryEntryRepository.findByUserAndCreatedAtBetween(eq(user), any(), any(), any()))
+            .thenReturn(new PageImpl<>(List.of(entry)));
+
+        DomainResponses.DiaryEntryResponse response = service.list(
+            null,
+            null,
+            null,
+            List.of(),
+            PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "createdAt"))
+        ).content().getFirst();
+
+        assertThat(response.title()).isEqualTo("Titulo");
+        assertThat(response.content()).isEqualTo("Contenido");
+        verify(diaryEntryRepository, never()).save(any(DiaryEntry.class));
+    }
+
+    private AesGcmContentCryptoService cryptoService() {
+        AppProperties properties = new AppProperties();
+        properties.getContentEncryption().setKey("base64:" + Base64.getEncoder().encodeToString(
+            "0123456789abcdef0123456789abcdef".getBytes(StandardCharsets.UTF_8)
+        ));
+        Environment environment = org.mockito.Mockito.mock(Environment.class);
+        when(environment.acceptsProfiles(any(Profiles.class))).thenReturn(false);
+        AesGcmContentCryptoService crypto = new AesGcmContentCryptoService(properties, environment);
+        ReflectionTestUtils.invokeMethod(crypto, "initialize");
+        return crypto;
     }
 }

@@ -12,6 +12,7 @@ import com.auraia.backend.models.entities.User;
 import com.auraia.backend.repositories.ChatSessionRepository;
 import com.auraia.backend.repositories.UserRepository;
 import com.auraia.backend.security.SecurityUtils;
+import com.auraia.backend.services.privacy.ContentCryptoService;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -30,35 +31,40 @@ public class ChatbotServiceImpl implements ChatbotService {
     private final ChatSessionRepository chatSessionRepository;
     private final UserRepository userRepository;
     private final AiAnalyzerClient aiAnalyzerClient;
+    private final ContentCryptoService contentCryptoService;
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public PageResponse<DomainResponses.ChatSessionResponse> listSessions(Pageable pageable) {
-        return PageResponse.from(chatSessionRepository.findByUser(currentUser(), pageable).map(this::toResponse));
+        User user = currentUser();
+        return PageResponse.from(chatSessionRepository.findByUser(user, pageable).map(session -> toResponse(session, user, true)));
     }
 
     @Override
     @Transactional
     public DomainResponses.ChatSessionResponse createSession() {
+        User user = currentUser();
         ChatSession session = ChatSession.builder()
-            .user(currentUser())
-            .title("Nueva sesion")
+            .user(user)
+            .title(contentCryptoService.encrypt(user.getId(), "chat.title", "Nueva sesion"))
             .startedAt(Instant.now())
             .build();
-        return toResponse(chatSessionRepository.save(session));
+        return toResponse(chatSessionRepository.save(session), user, false);
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public DomainResponses.ChatSessionResponse getSession(UUID id) {
-        return toResponse(findOwned(id));
+        User user = currentUser();
+        return toResponse(findOwned(id, user), user, true);
     }
 
     @Override
     @Transactional
     public DomainResponses.ChatSessionResponse sendMessage(UUID id, DomainRequests.ChatMessageRequest request) {
-        ChatSession session = findOwned(id);
-        List<Map<String, Object>> messages = new ArrayList<>(session.getMessages());
+        User user = currentUser();
+        ChatSession session = findOwned(id, user);
+        List<Map<String, Object>> messages = decryptedMessages(user.getId(), session.getMessages());
         messages.add(message("user", request.message(), Map.of()));
         AiChatResponse aiResponse = aiAnalyzerClient.chat(messages, request.message());
         messages.add(message("assistant", aiResponse.reply(), Map.of(
@@ -66,22 +72,29 @@ public class ChatbotServiceImpl implements ChatbotService {
             "riskLevel", aiResponse.riskLevel(),
             "emotions", aiResponse.emotions()
         )));
-        if ("Nueva sesion".equals(session.getTitle())) {
-            session.setTitle(request.message().length() > 60 ? request.message().substring(0, 60) : request.message());
+        String title = contentCryptoService.decrypt(user.getId(), "chat.title", session.getTitle());
+        if ("Nueva sesion".equals(title)) {
+            title = request.message().length() > 60 ? request.message().substring(0, 60) : request.message();
         }
-        session.setMessages(messages);
-        return toResponse(chatSessionRepository.save(session));
+        session.setTitle(contentCryptoService.encrypt(user.getId(), "chat.title", title));
+        session.setMessages(encryptedMessages(user.getId(), messages));
+        ChatSession saved = chatSessionRepository.save(session);
+        return new DomainResponses.ChatSessionResponse(saved.getId(), title, messages, saved.getStartedAt(), saved.getUpdatedAt());
     }
 
     @Override
     @Transactional
     public AuthResponses.MessageResponse deleteSession(UUID id) {
-        chatSessionRepository.delete(findOwned(id));
+        chatSessionRepository.delete(findOwned(id, currentUser()));
         return new AuthResponses.MessageResponse("OK");
     }
 
     private ChatSession findOwned(UUID id) {
-        return chatSessionRepository.findByIdAndUser(id, currentUser())
+        return findOwned(id, currentUser());
+    }
+
+    private ChatSession findOwned(UUID id, User user) {
+        return chatSessionRepository.findByIdAndUser(id, user)
             .orElseThrow(() -> new ResourceNotFoundException("Chat session not found"));
     }
 
@@ -94,14 +107,74 @@ public class ChatbotServiceImpl implements ChatbotService {
         return message;
     }
 
-    private DomainResponses.ChatSessionResponse toResponse(ChatSession session) {
+    private DomainResponses.ChatSessionResponse toResponse(ChatSession session, User user, boolean protectLegacy) {
+        String title = contentCryptoService.decrypt(user.getId(), "chat.title", session.getTitle());
+        List<Map<String, Object>> messages = decryptedMessages(user.getId(), session.getMessages());
+        if (protectLegacy && contentCryptoService.isEnabled()) {
+            boolean titleNeedsProtection = session.getTitle() != null && !contentCryptoService.isEncrypted(session.getTitle());
+            boolean messagesNeedProtection = hasLegacyMessageContent(session.getMessages());
+            if (titleNeedsProtection || messagesNeedProtection) {
+                if (titleNeedsProtection) {
+                    session.setTitle(contentCryptoService.encrypt(user.getId(), "chat.title", title));
+                }
+                if (messagesNeedProtection) {
+                    session.setMessages(encryptedMessages(user.getId(), messages));
+                }
+                chatSessionRepository.save(session);
+            }
+        }
         return new DomainResponses.ChatSessionResponse(
             session.getId(),
-            session.getTitle(),
-            session.getMessages(),
+            title,
+            messages,
             session.getStartedAt(),
             session.getUpdatedAt()
         );
+    }
+
+    private List<Map<String, Object>> decryptedMessages(UUID userId, List<Map<String, Object>> messages) {
+        if (messages == null || messages.isEmpty()) {
+            return new ArrayList<>();
+        }
+        List<Map<String, Object>> result = new ArrayList<>(messages.size());
+        for (Map<String, Object> source : messages) {
+            Map<String, Object> copy = new LinkedHashMap<>(source);
+            Object content = copy.get("content");
+            if (content instanceof String text) {
+                copy.put("content", contentCryptoService.decrypt(userId, "chat.message-content", text));
+            }
+            result.add(copy);
+        }
+        return result;
+    }
+
+    private List<Map<String, Object>> encryptedMessages(UUID userId, List<Map<String, Object>> messages) {
+        if (messages == null || messages.isEmpty()) {
+            return new ArrayList<>();
+        }
+        List<Map<String, Object>> result = new ArrayList<>(messages.size());
+        for (Map<String, Object> source : messages) {
+            Map<String, Object> copy = new LinkedHashMap<>(source);
+            Object content = copy.get("content");
+            if (content instanceof String text) {
+                copy.put("content", contentCryptoService.encrypt(userId, "chat.message-content", text));
+            }
+            result.add(copy);
+        }
+        return result;
+    }
+
+    private boolean hasLegacyMessageContent(List<Map<String, Object>> messages) {
+        if (messages == null || messages.isEmpty()) {
+            return false;
+        }
+        for (Map<String, Object> message : messages) {
+            Object content = message.get("content");
+            if (content instanceof String text && !contentCryptoService.isEncrypted(text)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private User currentUser() {

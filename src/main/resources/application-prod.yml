@@ -9,3 +9,7 @@ logging:
   level:
     com.auraia.backend: INFO
     org.springframework.security: WARN
+
+app:
+  content-encryption:
+    required: ${CONTENT_ENCRYPTION_REQUIRED:true}

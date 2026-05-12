@@ -1,7 +1,6 @@
 package com.auraia.backend.services.mood;
 
 import com.auraia.backend.exceptions.ResourceNotFoundException;
-import com.auraia.backend.mappers.MoodLogMapper;
 import com.auraia.backend.models.dto.request.DomainRequests;
 import com.auraia.backend.models.dto.response.AuthResponses;
 import com.auraia.backend.models.dto.response.DomainResponses;
@@ -11,6 +10,7 @@ import com.auraia.backend.models.entities.User;
 import com.auraia.backend.repositories.MoodLogRepository;
 import com.auraia.backend.repositories.UserRepository;
 import com.auraia.backend.security.SecurityUtils;
+import com.auraia.backend.services.privacy.ContentCryptoService;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -26,28 +26,31 @@ public class MoodServiceImpl implements MoodService {
 
     private final MoodLogRepository moodLogRepository;
     private final UserRepository userRepository;
-    private final MoodLogMapper moodLogMapper;
+    private final ContentCryptoService contentCryptoService;
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public PageResponse<DomainResponses.MoodLogResponse> list(Instant from, Instant to, Pageable pageable) {
+        User user = currentUser();
         Instant start = from == null ? Instant.EPOCH : from;
         Instant end = to == null ? Instant.now().plus(1, ChronoUnit.DAYS) : to;
-        return PageResponse.from(moodLogRepository.findByUserAndLoggedAtBetween(currentUser(), start, end, pageable)
-            .map(moodLogMapper::toResponse));
+        return PageResponse.from(moodLogRepository.findByUserAndLoggedAtBetween(user, start, end, pageable)
+            .map(log -> decryptAndProtect(log, user)));
     }
 
     @Override
     @Transactional
     public DomainResponses.MoodLogResponse create(DomainRequests.MoodLogRequest request) {
+        User user = currentUser();
+        String note = blankToNull(request.note());
         MoodLog moodLog = MoodLog.builder()
-            .user(currentUser())
+            .user(user)
             .beforeLevel(request.beforeLevel())
             .afterLevel(request.afterLevel())
-            .note(blankToNull(request.note()))
+            .note(contentCryptoService.encrypt(user.getId(), "mood.note", note))
             .loggedAt(request.loggedAt() == null ? Instant.now() : request.loggedAt())
             .build();
-        return moodLogMapper.toResponse(moodLogRepository.save(moodLog));
+        return response(moodLogRepository.save(moodLog), note);
     }
 
     @Override
@@ -86,5 +89,31 @@ public class MoodServiceImpl implements MoodService {
 
     private double round(double value) {
         return Math.round(value * 100.0) / 100.0;
+    }
+
+    private DomainResponses.MoodLogResponse decryptAndProtect(MoodLog moodLog, User user) {
+        String note = contentCryptoService.decrypt(user.getId(), "mood.note", moodLog.getNote());
+        if (contentCryptoService.isEnabled()) {
+            String encryptedNote = moodLog.getNote() != null && !contentCryptoService.isEncrypted(moodLog.getNote())
+                ? contentCryptoService.encrypt(user.getId(), "mood.note", note)
+                : moodLog.getNote();
+            if (!java.util.Objects.equals(moodLog.getNote(), encryptedNote)) {
+                moodLog.setNote(encryptedNote);
+                moodLogRepository.save(moodLog);
+            }
+        }
+        return response(moodLog, note);
+    }
+
+    private DomainResponses.MoodLogResponse response(MoodLog moodLog, String note) {
+        return new DomainResponses.MoodLogResponse(
+            moodLog.getId(),
+            moodLog.getBeforeLevel(),
+            moodLog.getAfterLevel(),
+            note,
+            moodLog.getLoggedAt(),
+            moodLog.getCreatedAt(),
+            moodLog.getUpdatedAt()
+        );
     }
 }

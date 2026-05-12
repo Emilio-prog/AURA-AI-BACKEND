@@ -104,3 +104,6 @@ app:
     site-key: ${TURNSTILE_SITE_KEY:}
     secret-key: ${TURNSTILE_SECRET_KEY:}
     timeout-ms: ${TURNSTILE_TIMEOUT_MS:4000}
+  content-encryption:
+    key: ${CONTENT_ENCRYPTION_KEY:}
+    required: ${CONTENT_ENCRYPTION_REQUIRED:false}
