@@ -25,13 +25,13 @@ public class Contact extends AuditedEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(nullable = false, length = 160)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String name;
 
-    @Column(nullable = false, length = 40)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String phone;
 
-    @Column(length = 80)
+    @Column(columnDefinition = "TEXT")
     private String relationship;
 
     @Column(nullable = false)

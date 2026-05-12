@@ -9,9 +9,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.auraia.backend.exceptions.BusinessException;
-import com.auraia.backend.mappers.ContactMapper;
-import com.auraia.backend.mappers.DiaryEntryMapper;
-import com.auraia.backend.mappers.MoodLogMapper;
 import com.auraia.backend.mappers.UserMapper;
 import com.auraia.backend.mappers.UserSettingsMapper;
 import com.auraia.backend.models.dto.request.UserRequests;
@@ -35,6 +32,7 @@ import com.auraia.backend.security.UserPrincipal;
 import com.auraia.backend.services.UserDeletionService;
 import com.auraia.backend.services.auth.PasswordPolicyValidator;
 import com.auraia.backend.services.auth.VerificationEmailService;
+import com.auraia.backend.services.privacy.TestContentCryptoService;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -77,12 +75,6 @@ class UserServiceImplTest {
     @Mock
     UserSettingsMapper userSettingsMapper;
     @Mock
-    DiaryEntryMapper diaryEntryMapper;
-    @Mock
-    MoodLogMapper moodLogMapper;
-    @Mock
-    ContactMapper contactMapper;
-    @Mock
     PasswordEncoder passwordEncoder;
     @Mock
     PasswordPolicyValidator passwordPolicyValidator;
@@ -109,14 +101,12 @@ class UserServiceImplTest {
             verificationTokenRepository,
             userMapper,
             userSettingsMapper,
-            diaryEntryMapper,
-            moodLogMapper,
-            contactMapper,
             passwordEncoder,
             passwordPolicyValidator,
             userDeletionService,
             verificationEmailService,
-            null
+            null,
+            new TestContentCryptoService()
         );
         userId = UUID.randomUUID();
         user = User.builder()
