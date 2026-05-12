@@ -45,9 +45,12 @@ public class AppProperties {
 
     @Data
     public static class Ai {
-        private String serviceUrl = "http://localhost:8000";
         private boolean enabled = false;
-        private int timeoutMs = 3000;
+        private String geminiApiKey;
+        private String geminiModel = "gemini-flash-latest";
+        private int maxHistoryMessages = 12;
+        private long chatRateLimitCapacity = 20;
+        private long chatRateLimitRefillMinutes = 5;
     }
 
     @Data

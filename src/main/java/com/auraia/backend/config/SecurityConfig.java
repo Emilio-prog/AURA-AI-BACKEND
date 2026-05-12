@@ -1,6 +1,7 @@
 package com.auraia.backend.config;
 
 import com.auraia.backend.security.AuthRateLimitFilter;
+import com.auraia.backend.security.AiChatRateLimitFilter;
 import com.auraia.backend.security.jwt.JwtAuthFilter;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +34,8 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http,
                                             JwtAuthFilter jwtAuthFilter,
-                                            AuthRateLimitFilter authRateLimitFilter) throws Exception {
+                                            AuthRateLimitFilter authRateLimitFilter,
+                                            AiChatRateLimitFilter aiChatRateLimitFilter) throws Exception {
         http
             .csrf(AbstractHttpConfigurer::disable)
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -61,7 +63,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated())
             .addFilterBefore(authRateLimitFilter, UsernamePasswordAuthenticationFilter.class)
-            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+            .addFilterAfter(aiChatRateLimitFilter, JwtAuthFilter.class);
 
         return http.build();
     }

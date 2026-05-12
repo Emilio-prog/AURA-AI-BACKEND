@@ -1,6 +1,6 @@
 # AURA IA Backend
 
-Spring Boot backend for the AURA IA user panel. It owns authentication, PostgreSQL persistence, user data, and the HTTP client boundary for the future Python AI service.
+Spring Boot backend for the AURA IA user panel. It owns authentication, PostgreSQL persistence, user data, billing, and the Gemini AI integration.
 
 ## Requirements
 
@@ -21,7 +21,7 @@ Important variables:
 - `FRONTEND_BASE_URL`, used for email verification links
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM`
 - `EMAIL_ENABLED=true` and `EMAIL_AUTO_VERIFY_WHEN_DISABLED=false` for real email verification
-- `AI_SERVICE_URL`, `AI_SERVICE_ENABLED`, `AI_SERVICE_TIMEOUT_MS`
+- `AI_SERVICE_ENABLED`, `GEMINI_API_KEY`, `GEMINI_MODEL`, `AI_MAX_HISTORY_MESSAGES`
 - `ADMIN_EMAILS`, comma-separated emails promoted to admin
 
 The Supabase project currently used for dev is `AURA-AI` (`aexcwfxhbiifvcxdgcxm`). Local development uses the Supabase Session pooler because the direct DB host is IPv6-only in this project:

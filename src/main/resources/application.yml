@@ -82,9 +82,12 @@ app:
     verification-token-ttl-hours: ${EMAIL_VERIFICATION_TTL_HOURS:24}
     password-reset-token-ttl-minutes: ${PASSWORD_RESET_TTL_MINUTES:30}
   ai:
-    service-url: ${AI_SERVICE_URL:http://localhost:8000}
     enabled: ${AI_SERVICE_ENABLED:false}
-    timeout-ms: ${AI_SERVICE_TIMEOUT_MS:3000}
+    gemini-api-key: ${GEMINI_API_KEY:}
+    gemini-model: ${GEMINI_MODEL:gemini-flash-latest}
+    max-history-messages: ${AI_MAX_HISTORY_MESSAGES:12}
+    chat-rate-limit-capacity: ${AI_CHAT_RATE_LIMIT_CAPACITY:20}
+    chat-rate-limit-refill-minutes: ${AI_CHAT_RATE_LIMIT_REFILL_MINUTES:5}
   rate-limit:
     auth-capacity: ${AUTH_RATE_LIMIT_CAPACITY:5}
     auth-refill-minutes: ${AUTH_RATE_LIMIT_REFILL_MINUTES:1}
