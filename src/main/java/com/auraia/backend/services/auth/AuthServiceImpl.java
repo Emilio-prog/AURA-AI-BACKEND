@@ -21,7 +21,6 @@ import com.auraia.backend.repositories.RefreshTokenRepository;
 import com.auraia.backend.repositories.UserRepository;
 import com.auraia.backend.repositories.UserSettingsRepository;
 import com.auraia.backend.security.SecurityUtils;
-import com.auraia.backend.security.jwt.JwtTokenProvider;
 import com.auraia.backend.utils.TokenHashing;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -49,8 +48,8 @@ public class AuthServiceImpl implements AuthService {
     private final TurnstileService turnstileService;
     private final PasswordPolicyValidator passwordPolicyValidator;
     private final PasswordEncoder passwordEncoder;
-    private final JwtTokenProvider jwtTokenProvider;
     private final UserMapper userMapper;
+    private final AuthTokenService authTokenService;
     private final AppProperties properties;
     private final MessageSource messageSource;
 
@@ -92,13 +91,13 @@ public class AuthServiceImpl implements AuthService {
     public AuthResponses.AuthResponse login(AuthRequests.LoginRequest request) {
         User user = userRepository.findByEmailIgnoreCaseAndDeletedAtIsNull(normalizeEmail(request.email()))
             .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
-        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+        if (user.getPasswordHash() == null || !passwordEncoder.matches(request.password(), user.getPasswordHash())) {
             throw new BadCredentialsException("Invalid credentials");
         }
         if (!user.isEmailVerified()) {
             throw new BusinessException("error.email_not_verified");
         }
-        return issueTokens(user);
+        return authTokenService.issueTokens(user);
     }
 
     @Override
@@ -113,7 +112,7 @@ public class AuthServiceImpl implements AuthService {
         }
         refreshToken.setRevokedAt(now);
         refreshTokenRepository.save(refreshToken);
-        return issueTokens(refreshToken.getUser());
+        return authTokenService.issueTokens(refreshToken.getUser());
     }
 
     @Override
@@ -206,23 +205,6 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findByIdAndDeletedAtIsNull(SecurityUtils.currentUserId())
             .orElseThrow(() -> new UnauthorizedException("Authentication required"));
         return userMapper.toResponse(user);
-    }
-
-    private AuthResponses.AuthResponse issueTokens(User user) {
-        String accessToken = jwtTokenProvider.createAccessToken(user);
-        String refreshToken = TokenHashing.newOpaqueToken();
-        refreshTokenRepository.save(RefreshToken.builder()
-            .user(user)
-            .tokenHash(TokenHashing.sha256(refreshToken))
-            .expiresAt(Instant.now().plusMillis(properties.getJwt().getRefreshTokenExpirationMs()))
-            .build());
-        return new AuthResponses.AuthResponse(
-            accessToken,
-            refreshToken,
-            "Bearer",
-            jwtTokenProvider.accessTokenExpirationMs(),
-            userMapper.toResponse(user)
-        );
     }
 
     private void createAndSendVerificationToken(User user) {

@@ -43,4 +43,10 @@ public final class AuthRequests {
         @NotBlank @Size(min = 12, max = 128) String password
     ) {
     }
+
+    public record OAuthExchangeRequest(@NotBlank String code) {
+    }
+
+    public record SupabaseExchangeRequest(@NotBlank String accessToken) {
+    }
 }

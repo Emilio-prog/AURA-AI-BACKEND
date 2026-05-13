@@ -30,7 +30,7 @@ public class User extends AuditedEntity {
     @Column(nullable = false, unique = true, length = 320)
     private String email;
 
-    @Column(nullable = false)
+    @Column
     private String passwordHash;
 
     @Column(nullable = false, length = 160)
