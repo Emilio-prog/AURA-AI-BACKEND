@@ -22,6 +22,7 @@ spring:
     default-schema: public
     baseline-on-migrate: ${FLYWAY_BASELINE_ON_MIGRATE:true}
     baseline-version: ${FLYWAY_BASELINE_VERSION:1}
+    ignore-migration-patterns: ${SPRING_FLYWAY_IGNORE_MIGRATION_PATTERNS:}
   mail:
     host: ${SMTP_HOST:localhost}
     port: ${SMTP_PORT:1025}
@@ -115,3 +116,14 @@ app:
     subject: ${WEB_PUSH_SUBJECT:mailto:hola@aura-ia.es}
     diary-reminder-time: ${WEB_PUSH_DIARY_REMINDER_TIME:21:30}
     scheduler-fixed-delay-ms: ${WEB_PUSH_SCHEDULER_FIXED_DELAY_MS:60000}
+  google-oauth:
+    enabled: ${GOOGLE_OAUTH_ENABLED:false}
+    client-id: ${GOOGLE_OAUTH_CLIENT_ID:}
+    client-secret: ${GOOGLE_OAUTH_CLIENT_SECRET:}
+    redirect-uri: ${GOOGLE_OAUTH_REDIRECT_URI:http://localhost:8080/api/v1/auth/oauth/google/callback}
+    state-ttl-minutes: ${GOOGLE_OAUTH_STATE_TTL_MINUTES:10}
+    exchange-code-ttl-minutes: ${GOOGLE_OAUTH_EXCHANGE_CODE_TTL_MINUTES:5}
+  supabase-auth:
+    enabled: ${SUPABASE_AUTH_ENABLED:false}
+    url: ${SUPABASE_URL:}
+    anon-key: ${SUPABASE_ANON_KEY:}
