@@ -14,7 +14,9 @@ public interface UserService {
 
     AuthResponses.MessageResponse changePassword(UserRequests.ChangePasswordRequest request);
 
-    AuthResponses.MessageResponse deleteCurrentAccount();
+    AuthResponses.MessageResponse deleteCurrentAccount(UserRequests.DeleteAccountRequest request);
 
     UserResponses.ExportDataResponse exportCurrentUserData();
+
+    byte[] exportCurrentUserDataPdf();
 }

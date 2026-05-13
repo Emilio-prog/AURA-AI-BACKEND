@@ -26,6 +26,8 @@
         <springdoc.version>2.6.0</springdoc.version>
         <stripe-java.version>32.1.0</stripe-java.version>
         <web-push.version>5.1.2</web-push.version>
+        <twilio.version>12.0.0</twilio.version>
+        <pdfbox.version>3.0.6</pdfbox.version>
         <httpclient.version>4.5.14</httpclient.version>
         <bcprov.version>1.78.1</bcprov.version>
         <jose4j.version>0.7.9</jose4j.version>
@@ -121,6 +123,16 @@
             <groupId>nl.martijndwars</groupId>
             <artifactId>web-push</artifactId>
             <version>${web-push.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.twilio.sdk</groupId>
+            <artifactId>twilio</artifactId>
+            <version>${twilio.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>${pdfbox.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>

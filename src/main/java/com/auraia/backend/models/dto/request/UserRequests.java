@@ -27,6 +27,12 @@ public final class UserRequests {
     ) {
     }
 
+    public record DeleteAccountRequest(
+        @NotBlank @Size(max = 80) String confirmationText,
+        @Size(max = 128) String currentPassword
+    ) {
+    }
+
     public record CompleteOnboardingRequest(
         @NotBlank @Size(min = 2, max = 160) String preferredName,
         @NotBlank @Size(min = 2, max = 16) String language,

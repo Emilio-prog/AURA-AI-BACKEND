@@ -65,6 +65,7 @@ public class UserServiceImpl implements UserService {
     private final VerificationEmailService verificationEmailService;
     private final AppProperties properties;
     private final ContentCryptoService contentCryptoService;
+    private final UserExportPdfService userExportPdfService;
 
     @Override
     @Transactional
@@ -141,8 +142,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public AuthResponses.MessageResponse deleteCurrentAccount() {
-        userDeletionService.anonymizeAndSoftDelete(currentUser());
+    public AuthResponses.MessageResponse deleteCurrentAccount(UserRequests.DeleteAccountRequest request) {
+        User user = currentUser();
+        validateAccountDeletion(user, request);
+        userDeletionService.deletePermanently(user);
         return new AuthResponses.MessageResponse("OK");
     }
 
@@ -169,6 +172,23 @@ public class UserServiceImpl implements UserService {
             panicAlerts,
             Map.of("format", "aura-export-v1")
         );
+    }
+
+    @Override
+    @Transactional
+    public byte[] exportCurrentUserDataPdf() {
+        return userExportPdfService.render(exportCurrentUserData());
+    }
+
+    private void validateAccountDeletion(User user, UserRequests.DeleteAccountRequest request) {
+        if (request == null || !"ELIMINAR MI CUENTA".equals(request.confirmationText())) {
+            throw new BusinessException("error.account_delete_confirmation_required");
+        }
+        if (hasText(user.getPasswordHash())) {
+            if (!hasText(request.currentPassword()) || !passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
+                throw new BusinessException("error.current_password");
+            }
+        }
     }
 
     private DomainResponses.PanicAlertResponse toPanicResponse(PanicAlert alert, User user) {

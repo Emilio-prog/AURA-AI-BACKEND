@@ -9,6 +9,7 @@ import jakarta.validation.constraints.Size;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public final class DomainRequests {
 
@@ -47,6 +48,7 @@ public final class DomainRequests {
 
     public record PanicTriggerRequest(
         @Size(max = 3000) String notes,
+        UUID contactId,
         Map<String, Object> contextJson
     ) {
     }

@@ -11,4 +11,6 @@ public interface OAuthIdentityRepository extends JpaRepository<OAuthIdentity, UU
     Optional<OAuthIdentity> findByProviderAndProviderSubjectAndActiveTrue(String provider, String providerSubject);
 
     Optional<OAuthIdentity> findByUserAndProviderAndActiveTrue(User user, String provider);
+
+    void deleteAllByUser(User user);
 }

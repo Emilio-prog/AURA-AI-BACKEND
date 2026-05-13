@@ -23,6 +23,7 @@ public class AppProperties {
     private ContentEncryption contentEncryption = new ContentEncryption();
     private WebPush webPush = new WebPush();
     private GoogleOAuth googleOAuth = new GoogleOAuth();
+    private SosSms sosSms = new SosSms();
     private DevDemoUser devDemoUser = new DevDemoUser();
 
     @Data
@@ -109,6 +110,14 @@ public class AppProperties {
         private String redirectUri = "http://localhost:8080/api/v1/auth/oauth/google/callback";
         private long stateTtlMinutes = 10;
         private long exchangeCodeTtlMinutes = 5;
+    }
+
+    @Data
+    public static class SosSms {
+        private boolean enabled = false;
+        private String twilioAccountSid;
+        private String twilioAuthToken;
+        private String twilioFromNumber;
     }
 
     @Data
