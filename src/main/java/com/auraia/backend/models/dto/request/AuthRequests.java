@@ -46,7 +46,4 @@ public final class AuthRequests {
 
     public record OAuthExchangeRequest(@NotBlank String code) {
     }
-
-    public record SupabaseExchangeRequest(@NotBlank String accessToken) {
-    }
 }

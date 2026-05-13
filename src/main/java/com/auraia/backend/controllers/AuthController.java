@@ -4,7 +4,6 @@ import com.auraia.backend.models.dto.request.AuthRequests;
 import com.auraia.backend.models.dto.response.AuthResponses;
 import com.auraia.backend.models.dto.response.UserResponses;
 import com.auraia.backend.services.auth.AuthService;
-import com.auraia.backend.services.auth.SupabaseAuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
@@ -24,7 +23,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final AuthService authService;
-    private final SupabaseAuthService supabaseAuthService;
 
     @Operation(summary = "Register a new user")
     @ApiResponse(responseCode = "202", description = "User created and email verification sent")
@@ -74,12 +72,6 @@ public class AuthController {
     @PostMapping("/reset-password")
     public AuthResponses.MessageResponse resetPassword(@Valid @RequestBody AuthRequests.ResetPasswordRequest request) {
         return authService.resetPassword(request);
-    }
-
-    @Operation(summary = "Exchange a verified Supabase Auth session for AURA tokens")
-    @PostMapping("/supabase/exchange")
-    public AuthResponses.AuthResponse exchangeSupabase(@Valid @RequestBody AuthRequests.SupabaseExchangeRequest request) {
-        return supabaseAuthService.exchange(request);
     }
 
     @Operation(summary = "Return authenticated user")
