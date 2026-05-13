@@ -220,7 +220,7 @@ public class WebPushServiceImpl implements WebPushService {
             WebPushPayload payload = new WebPushPayload(
                 WebPushNotificationType.ACHIEVEMENT_UNLOCKED,
                 "AURA IA",
-                "Has desbloqueado nuevos logros.",
+                "Enhorabuena, has desbloqueado nuevos logros.",
                 "/#/dashboard/logros"
             );
             WebPushSendResult result = webPushSender.send(subscription, payload);

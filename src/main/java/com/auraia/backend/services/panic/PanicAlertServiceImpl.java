@@ -1,5 +1,6 @@
 package com.auraia.backend.services.panic;
 
+import com.auraia.backend.exceptions.BusinessException;
 import com.auraia.backend.exceptions.ResourceNotFoundException;
 import com.auraia.backend.models.dto.request.DomainRequests;
 import com.auraia.backend.models.dto.response.DomainResponses;
@@ -15,6 +16,8 @@ import com.auraia.backend.repositories.PanicNotificationResultRepository;
 import com.auraia.backend.repositories.UserRepository;
 import com.auraia.backend.security.SecurityUtils;
 import com.auraia.backend.services.privacy.ContentCryptoService;
+import com.auraia.backend.services.sms.SosSmsResult;
+import com.auraia.backend.services.sms.SosSmsSender;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -34,6 +37,7 @@ public class PanicAlertServiceImpl implements PanicAlertService {
     private final ContactRepository contactRepository;
     private final UserRepository userRepository;
     private final ContentCryptoService contentCryptoService;
+    private final SosSmsSender sosSmsSender;
 
     @Override
     @Transactional
@@ -48,16 +52,25 @@ public class PanicAlertServiceImpl implements PanicAlertService {
             .contextJson(contentCryptoService.encryptJsonMap(user.getId(), "panic.context", contextJson))
             .build();
         PanicAlert saved = panicAlertRepository.save(alert);
-        List<Contact> contacts = contactRepository.findByUserAndSosEnabledTrueOrderByPriorityAsc(user);
-        for (Contact contact : contacts) {
-            String contactName = contentCryptoService.decrypt(user.getId(), "contact.name", contact.getName());
-            notificationResultRepository.save(PanicNotificationResult.builder()
-                .alert(saved)
-                .contact(contact)
-                .channel("MOCK")
-                .status(NotificationStatus.MOCKED)
-                .details(contentCryptoService.encrypt(user.getId(), "panic.notification-details", "Mock notification queued for " + contactName))
-                .build());
+        if (request.contactId() != null) {
+            Contact contact = contactRepository.findByIdAndUser(request.contactId(), user)
+                .orElseThrow(() -> new ResourceNotFoundException("Contact not found"));
+            if (!contact.isAvailable() || !contact.isSosEnabled()) {
+                throw new BusinessException("error.sos_contact_unavailable");
+            }
+            sendSmsNotification(saved, user, contact);
+        } else {
+            List<Contact> contacts = contactRepository.findByUserAndSosEnabledTrueOrderByPriorityAsc(user);
+            for (Contact contact : contacts) {
+                String contactName = contentCryptoService.decrypt(user.getId(), "contact.name", contact.getName());
+                notificationResultRepository.save(PanicNotificationResult.builder()
+                    .alert(saved)
+                    .contact(contact)
+                    .channel("MOCK")
+                    .status(NotificationStatus.MOCKED)
+                    .details(contentCryptoService.encrypt(user.getId(), "panic.notification-details", "Mock notification queued for " + contactName))
+                    .build());
+            }
         }
         return toResponse(saved, user);
     }
@@ -135,6 +148,28 @@ public class PanicAlertServiceImpl implements PanicAlertService {
     private User currentUser() {
         return userRepository.findByIdAndDeletedAtIsNull(SecurityUtils.currentUserId())
             .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+    }
+
+    private void sendSmsNotification(PanicAlert alert, User user, Contact contact) {
+        String contactPhone = contentCryptoService.decrypt(user.getId(), "contact.phone", contact.getPhone());
+        String contactName = contentCryptoService.decrypt(user.getId(), "contact.name", contact.getName());
+        SosSmsResult result = sosSmsSender.send(contactPhone, sosMessage(user));
+        String details = switch (result.status()) {
+            case SENT -> "SMS sent to " + contactName + " (" + result.providerMessageId() + ")";
+            case MOCKED -> "SMS simulated for " + contactName;
+            case FAILED -> "SMS failed for " + contactName + ": " + result.details();
+        };
+        notificationResultRepository.save(PanicNotificationResult.builder()
+            .alert(alert)
+            .contact(contact)
+            .channel("SMS")
+            .status(result.status())
+            .details(contentCryptoService.encrypt(user.getId(), "panic.notification-details", details))
+            .build());
+    }
+
+    private String sosMessage(User user) {
+        return "AURA IA: " + user.getName() + " necesita apoyo ahora. Puedes llamarle o escribirle?";
     }
 
     private String blankToNull(String value) {
