@@ -1,0 +1,130 @@
+spring:
+  config:
+    import: optional:file:.env[.properties]
+  application:
+    name: aura-ai-backend
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/aura}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+        format_sql: false
+  flyway:
+    enabled: true
+    schemas: public
+    default-schema: public
+    baseline-on-migrate: ${FLYWAY_BASELINE_ON_MIGRATE:true}
+    baseline-version: ${FLYWAY_BASELINE_VERSION:1}
+    ignore-migration-patterns: ${SPRING_FLYWAY_IGNORE_MIGRATION_PATTERNS:}
+  mail:
+    host: ${SMTP_HOST:localhost}
+    port: ${SMTP_PORT:1025}
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${SMTP_AUTH:true}
+          starttls:
+            enable: ${SMTP_STARTTLS:true}
+  messages:
+    basename: messages
+    encoding: UTF-8
+  jackson:
+    time-zone: UTC
+    default-property-inclusion: non_null
+
+server:
+  port: ${SERVER_PORT:8080}
+  error:
+    include-stacktrace: never
+    include-message: always
+
+management:
+  health:
+    mail:
+      enabled: ${MAIL_HEALTH_ENABLED:false}
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+
+app:
+  api-base-path: /api/v1
+  frontend-base-url: ${FRONTEND_BASE_URL:http://localhost:5173}
+  admin-emails: ${ADMIN_EMAILS:}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+  jwt:
+    secret: ${JWT_SECRET:MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWYwMTIzNDU2Nzg5YWJjZGVmMDEyMzQ1Njc4OWFiY2RlZg==}
+    access-token-expiration-ms: ${JWT_EXPIRATION_MS:900000}
+    refresh-token-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000}
+  email:
+    enabled: ${EMAIL_ENABLED:true}
+    auto-verify-when-disabled: ${EMAIL_AUTO_VERIFY_WHEN_DISABLED:false}
+    from: ${SMTP_FROM:no-reply@aura.ai}
+    verification-token-ttl-hours: ${EMAIL_VERIFICATION_TTL_HOURS:24}
+    password-reset-token-ttl-minutes: ${PASSWORD_RESET_TTL_MINUTES:30}
+  ai:
+    enabled: ${AI_SERVICE_ENABLED:false}
+    gemini-api-key: ${GEMINI_API_KEY:}
+    gemini-model: ${GEMINI_MODEL:gemini-flash-latest}
+    max-history-messages: ${AI_MAX_HISTORY_MESSAGES:12}
+    chat-rate-limit-capacity: ${AI_CHAT_RATE_LIMIT_CAPACITY:20}
+    chat-rate-limit-refill-minutes: ${AI_CHAT_RATE_LIMIT_REFILL_MINUTES:5}
+  rate-limit:
+    auth-capacity: ${AUTH_RATE_LIMIT_CAPACITY:5}
+    auth-refill-minutes: ${AUTH_RATE_LIMIT_REFILL_MINUTES:1}
+  webhook:
+    resend-secret: ${RESEND_WEBHOOK_SECRET:}
+    stripe-secret: ${STRIPE_WEBHOOK_SECRET:}
+  billing:
+    stripe-secret-key: ${STRIPE_SECRET_KEY:}
+    personal-price-id: ${STRIPE_PRICE_ID_PERSONAL:}
+    premium-price-id: ${STRIPE_PRICE_ID_PREMIUM:}
+    portal-configuration-id: ${STRIPE_PORTAL_CONFIGURATION_ID:}
+  turnstile:
+    enabled: ${TURNSTILE_ENABLED:false}
+    site-key: ${TURNSTILE_SITE_KEY:}
+    secret-key: ${TURNSTILE_SECRET_KEY:}
+    timeout-ms: ${TURNSTILE_TIMEOUT_MS:4000}
+  content-encryption:
+    key: ${CONTENT_ENCRYPTION_KEY:}
+    required: ${CONTENT_ENCRYPTION_REQUIRED:false}
+  web-push:
+    enabled: ${WEB_PUSH_ENABLED:false}
+    scheduler-enabled: ${WEB_PUSH_SCHEDULER_ENABLED:true}
+    vapid-public-key: ${WEB_PUSH_VAPID_PUBLIC_KEY:}
+    vapid-private-key: ${WEB_PUSH_VAPID_PRIVATE_KEY:}
+    subject: ${WEB_PUSH_SUBJECT:mailto:hola@aura-ia.es}
+    diary-reminder-time: ${WEB_PUSH_DIARY_REMINDER_TIME:21:30}
+    scheduler-fixed-delay-ms: ${WEB_PUSH_SCHEDULER_FIXED_DELAY_MS:60000}
+  google-oauth:
+    enabled: ${GOOGLE_OAUTH_ENABLED:false}
+    client-id: ${GOOGLE_OAUTH_CLIENT_ID:}
+    client-secret: ${GOOGLE_OAUTH_CLIENT_SECRET:}
+    redirect-uri: ${GOOGLE_OAUTH_REDIRECT_URI:http://localhost:8080/api/v1/auth/oauth/google/callback}
+    state-ttl-minutes: ${GOOGLE_OAUTH_STATE_TTL_MINUTES:10}
+    exchange-code-ttl-minutes: ${GOOGLE_OAUTH_EXCHANGE_CODE_TTL_MINUTES:5}
+  sos-sms:
+    enabled: ${SOS_SMS_ENABLED:false}
+    twilio-account-sid: ${TWILIO_ACCOUNT_SID:}
+    twilio-auth-token: ${TWILIO_AUTH_TOKEN:}
+    twilio-from-number: ${TWILIO_FROM_NUMBER:}

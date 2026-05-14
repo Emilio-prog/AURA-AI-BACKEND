@@ -1,0 +1,15 @@
+spring:
+  flyway:
+    baseline-on-migrate: ${FLYWAY_BASELINE_ON_MIGRATE:true}
+    baseline-version: ${FLYWAY_BASELINE_VERSION:1}
+  jpa:
+    show-sql: false
+
+logging:
+  level:
+    com.auraia.backend: INFO
+    org.springframework.security: WARN
+
+app:
+  content-encryption:
+    required: ${CONTENT_ENCRYPTION_REQUIRED:true}
