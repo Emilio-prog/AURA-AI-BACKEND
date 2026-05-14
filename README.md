@@ -75,6 +75,12 @@ Healthcheck:
 GET /actuator/health
 ```
 
+## Version Control
+
+Backend changes follow GitFlow: work starts in `feature`, integrates into `develop`,
+is stabilized in `release`, and reaches `main` only through a tagged release.
+Critical production fixes use `hotfix` and are merged back into `develop`.
+
 ### Stripe Billing Webhooks
 
 Checkout can open from local development, but Stripe cannot call `localhost` directly after payment. To make plan changes sync locally, start the full dev stack from the repository root with:
