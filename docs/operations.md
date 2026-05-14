@@ -9,7 +9,7 @@
 - Backend image: `ghcr.io/emilio-prog/aura-ai-backend`
 - Frontend image: `ghcr.io/emilio-prog/aura-ai-frontend`
 - Database: Supabase PostgreSQL. Do not deploy a database container in Dokploy.
-- Dokploy panel: `http://187.127.232.186:3000`
+- Dokploy panel: Hostinger VPS `187.127.232.186`.
 
 ## Deployment model
 
@@ -22,8 +22,8 @@ GitHub Actions requires these repository secrets:
 
 Current Dokploy compose IDs:
 
-- Backend: `9bX8xSoghxKPymVVrR1tl`
-- Frontend: `_GZo53ZitWm-ob5c9B7f7`
+- Backend: `OjHAKcXJC0AkFmITmK2tA`
+- Frontend: `Y7KqolKyYBWz8gNpCONpH`
 
 Runtime secrets are stored only in Dokploy and GitHub Actions secrets. Do not commit `.env`, `.env.*`, `*.env`, `.mcp.json`, webhook URLs, API keys, JWT secrets, encryption keys or VAPID private keys.
 
