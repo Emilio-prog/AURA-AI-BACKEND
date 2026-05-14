@@ -9,9 +9,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.auraia.backend.exceptions.BusinessException;
-import com.auraia.backend.mappers.ContactMapper;
-import com.auraia.backend.mappers.DiaryEntryMapper;
-import com.auraia.backend.mappers.MoodLogMapper;
 import com.auraia.backend.mappers.UserMapper;
 import com.auraia.backend.mappers.UserSettingsMapper;
 import com.auraia.backend.models.dto.request.UserRequests;
@@ -35,6 +32,7 @@ import com.auraia.backend.security.UserPrincipal;
 import com.auraia.backend.services.UserDeletionService;
 import com.auraia.backend.services.auth.PasswordPolicyValidator;
 import com.auraia.backend.services.auth.VerificationEmailService;
+import com.auraia.backend.services.privacy.TestContentCryptoService;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -77,12 +75,6 @@ class UserServiceImplTest {
     @Mock
     UserSettingsMapper userSettingsMapper;
     @Mock
-    DiaryEntryMapper diaryEntryMapper;
-    @Mock
-    MoodLogMapper moodLogMapper;
-    @Mock
-    ContactMapper contactMapper;
-    @Mock
     PasswordEncoder passwordEncoder;
     @Mock
     PasswordPolicyValidator passwordPolicyValidator;
@@ -109,14 +101,13 @@ class UserServiceImplTest {
             verificationTokenRepository,
             userMapper,
             userSettingsMapper,
-            diaryEntryMapper,
-            moodLogMapper,
-            contactMapper,
             passwordEncoder,
             passwordPolicyValidator,
             userDeletionService,
             verificationEmailService,
-            null
+            null,
+            new TestContentCryptoService(),
+            new UserExportPdfService()
         );
         userId = UUID.randomUUID();
         user = User.builder()
@@ -231,6 +222,60 @@ class UserServiceImplTest {
         verify(userRepository, never()).save(any(User.class));
         verify(userSettingsRepository, never()).save(any(UserSettings.class));
         verify(contactRepository, never()).save(any(Contact.class));
+    }
+
+    @Test
+    void deleteCurrentAccountRequiresExactConfirmation() {
+        UserRequests.DeleteAccountRequest request = new UserRequests.DeleteAccountRequest(
+            "BORRAR",
+            "secret"
+        );
+
+        assertThatThrownBy(() -> service.deleteCurrentAccount(request))
+            .isInstanceOf(BusinessException.class)
+            .hasMessage("error.account_delete_confirmation_required");
+
+        verify(userDeletionService, never()).deletePermanently(any(User.class));
+    }
+
+    @Test
+    void deleteCurrentAccountRequiresPasswordForLocalAccount() {
+        UserRequests.DeleteAccountRequest request = new UserRequests.DeleteAccountRequest(
+            "ELIMINAR MI CUENTA",
+            null
+        );
+
+        assertThatThrownBy(() -> service.deleteCurrentAccount(request))
+            .isInstanceOf(BusinessException.class)
+            .hasMessage("error.current_password");
+
+        verify(userDeletionService, never()).deletePermanently(any(User.class));
+    }
+
+    @Test
+    void deleteCurrentAccountDeletesLocalAccountWithPassword() {
+        when(passwordEncoder.matches("secret", "hash")).thenReturn(true);
+
+        UserRequests.DeleteAccountRequest request = new UserRequests.DeleteAccountRequest(
+            "ELIMINAR MI CUENTA",
+            "secret"
+        );
+
+        assertThat(service.deleteCurrentAccount(request).message()).isEqualTo("OK");
+        verify(userDeletionService).deletePermanently(user);
+    }
+
+    @Test
+    void deleteCurrentAccountAllowsGoogleOnlyAccountWithoutPassword() {
+        user.setPasswordHash(null);
+
+        UserRequests.DeleteAccountRequest request = new UserRequests.DeleteAccountRequest(
+            "ELIMINAR MI CUENTA",
+            null
+        );
+
+        assertThat(service.deleteCurrentAccount(request).message()).isEqualTo("OK");
+        verify(userDeletionService).deletePermanently(user);
     }
 
     private UserRequests.CompleteOnboardingRequest validRequest() {

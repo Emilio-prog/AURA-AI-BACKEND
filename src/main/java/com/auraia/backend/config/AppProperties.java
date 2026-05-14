@@ -20,6 +20,10 @@ public class AppProperties {
     private Webhook webhook = new Webhook();
     private Billing billing = new Billing();
     private Turnstile turnstile = new Turnstile();
+    private ContentEncryption contentEncryption = new ContentEncryption();
+    private WebPush webPush = new WebPush();
+    private GoogleOAuth googleOAuth = new GoogleOAuth();
+    private SosSms sosSms = new SosSms();
     private DevDemoUser devDemoUser = new DevDemoUser();
 
     @Data
@@ -79,6 +83,41 @@ public class AppProperties {
         private String siteKey;
         private String secretKey;
         private int timeoutMs = 4000;
+    }
+
+    @Data
+    public static class ContentEncryption {
+        private String key;
+        private boolean required = false;
+    }
+
+    @Data
+    public static class WebPush {
+        private boolean enabled = false;
+        private boolean schedulerEnabled = true;
+        private String vapidPublicKey;
+        private String vapidPrivateKey;
+        private String subject = "mailto:hola@aura-ia.es";
+        private String diaryReminderTime = "21:30";
+        private long schedulerFixedDelayMs = 60000;
+    }
+
+    @Data
+    public static class GoogleOAuth {
+        private boolean enabled = false;
+        private String clientId;
+        private String clientSecret;
+        private String redirectUri = "http://localhost:8080/api/v1/auth/oauth/google/callback";
+        private long stateTtlMinutes = 10;
+        private long exchangeCodeTtlMinutes = 5;
+    }
+
+    @Data
+    public static class SosSms {
+        private boolean enabled = false;
+        private String twilioAccountSid;
+        private String twilioAuthToken;
+        private String twilioFromNumber;
     }
 
     @Data

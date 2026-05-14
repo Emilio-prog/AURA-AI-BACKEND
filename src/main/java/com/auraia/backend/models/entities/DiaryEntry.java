@@ -29,7 +29,7 @@ public class DiaryEntry extends AuditedEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(length = 180)
+    @Column(columnDefinition = "TEXT")
     private String title;
 
     @Column(nullable = false, columnDefinition = "TEXT")
@@ -37,11 +37,16 @@ public class DiaryEntry extends AuditedEntity {
 
     private Integer moodScore;
 
-    @Column(length = 80)
+    @Column(columnDefinition = "TEXT")
     private String moodLabel;
 
     @Builder.Default
     @JdbcTypeCode(SqlTypes.ARRAY)
     @Column(nullable = false, columnDefinition = "text[]")
     private List<String> tags = new ArrayList<>();
+
+    @Builder.Default
+    @JdbcTypeCode(SqlTypes.ARRAY)
+    @Column(nullable = false, columnDefinition = "text[]")
+    private List<String> searchTokens = new ArrayList<>();
 }

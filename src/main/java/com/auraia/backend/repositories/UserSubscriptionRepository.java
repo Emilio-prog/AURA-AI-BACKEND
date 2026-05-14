@@ -13,4 +13,6 @@ public interface UserSubscriptionRepository extends JpaRepository<UserSubscripti
     Optional<UserSubscription> findByStripeCustomerId(String stripeCustomerId);
 
     Optional<UserSubscription> findByStripeSubscriptionId(String stripeSubscriptionId);
+
+    void deleteAllByUser(User user);
 }

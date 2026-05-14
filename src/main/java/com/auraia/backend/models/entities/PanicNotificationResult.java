@@ -39,6 +39,6 @@ public class PanicNotificationResult extends CreatedEntity {
     @Column(nullable = false, length = 32)
     private NotificationStatus status;
 
-    @Column(length = 300)
+    @Column(columnDefinition = "TEXT")
     private String details;
 }

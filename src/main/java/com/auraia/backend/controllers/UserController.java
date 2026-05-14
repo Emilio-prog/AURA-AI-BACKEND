@@ -1,5 +1,6 @@
 package com.auraia.backend.controllers;
 
+import com.auraia.backend.exceptions.BusinessException;
 import com.auraia.backend.models.dto.request.UserRequests;
 import com.auraia.backend.models.dto.response.AuthResponses;
 import com.auraia.backend.models.dto.response.UserResponses;
@@ -8,6 +9,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -48,15 +52,31 @@ public class UserController {
         return userService.changePassword(request);
     }
 
-    @Operation(summary = "Soft delete and anonymize current account")
+    @Operation(summary = "Delete current account permanently after explicit confirmation")
+    @PostMapping("/me/delete")
+    public AuthResponses.MessageResponse deleteMeConfirmed(@Valid @RequestBody UserRequests.DeleteAccountRequest request) {
+        return userService.deleteCurrentAccount(request);
+    }
+
+    @Operation(summary = "Account deletion requires explicit confirmation")
     @DeleteMapping("/me")
     public AuthResponses.MessageResponse deleteMe() {
-        return userService.deleteCurrentAccount();
+        throw new BusinessException("error.account_delete_confirmation_required");
     }
 
     @Operation(summary = "Export current user data as JSON")
     @GetMapping("/me/export")
     public UserResponses.ExportDataResponse exportMe() {
         return userService.exportCurrentUserData();
+    }
+
+    @Operation(summary = "Export current user data as PDF")
+    @GetMapping(value = "/me/export.pdf", produces = MediaType.APPLICATION_PDF_VALUE)
+    public ResponseEntity<byte[]> exportMePdf() {
+        byte[] pdf = userService.exportCurrentUserDataPdf();
+        return ResponseEntity.ok()
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"aura-export.pdf\"")
+            .contentType(MediaType.APPLICATION_PDF)
+            .body(pdf);
     }
 }

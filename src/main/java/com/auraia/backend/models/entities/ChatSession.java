@@ -32,7 +32,7 @@ public class ChatSession extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(length = 180)
+    @Column(columnDefinition = "TEXT")
     private String title;
 
     @Builder.Default
