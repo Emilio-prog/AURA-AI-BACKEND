@@ -3,12 +3,13 @@
 ## Production surfaces
 
 - Frontend: `https://aura-ia.es`
-- Frontend alias: `https://www.aura-ia.es` redirects to the apex domain through Dokploy/Traefik.
+- Frontend alias: `https://www.aura-ia.es` serves the same frontend. Configure an explicit `www` to apex redirect later if canonical-domain enforcement is required.
 - Backend API: `https://api.aura-ia.es`
 - Backend health: `https://api.aura-ia.es/actuator/health`
 - Backend image: `ghcr.io/emilio-prog/aura-ai-backend`
 - Frontend image: `ghcr.io/emilio-prog/aura-ai-frontend`
 - Database: Supabase PostgreSQL. Do not deploy a database container in Dokploy.
+- Dokploy panel: `http://187.127.232.186:3000`
 
 ## Deployment model
 
@@ -21,8 +22,8 @@ GitHub Actions requires these repository secrets:
 
 Current Dokploy compose IDs:
 
-- Backend: `OjHAKcXJC0AkFmITmK2tA`
-- Frontend: `Y7KqolKyYBWz8gNpCONpH`
+- Backend: `9bX8xSoghxKPymVVrR1tl`
+- Frontend: `_GZo53ZitWm-ob5c9B7f7`
 
 Runtime secrets are stored only in Dokploy and GitHub Actions secrets. Do not commit `.env`, `.env.*`, `*.env`, `.mcp.json`, webhook URLs, API keys, JWT secrets, encryption keys or VAPID private keys.
 
