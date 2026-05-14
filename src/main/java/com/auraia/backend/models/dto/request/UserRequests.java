@@ -28,8 +28,7 @@ public final class UserRequests {
     }
 
     public record DeleteAccountRequest(
-        @NotBlank @Size(max = 80) String confirmationText,
-        @Size(max = 128) String currentPassword
+        @NotBlank @Size(max = 80) String confirmationText
     ) {
     }
 
