@@ -64,5 +64,11 @@ jobs:
 
       - name: Trigger Dokploy deploy
         run: |
-          curl -fsS -X POST "${{ secrets.DOKPLOY_BACKEND_WEBHOOK_URL }}" \
-               -H "Content-Type: application/json"
+          DOKPLOY_API_URL="${{ secrets.DOKPLOY_API_URL }}"
+          DOKPLOY_API_URL="${DOKPLOY_API_URL%/}"
+
+          curl -fsS -X POST "$DOKPLOY_API_URL/api/compose.deploy" \
+               -H "accept: application/json" \
+               -H "Content-Type: application/json" \
+               -H "x-api-key: ${{ secrets.DOKPLOY_API_KEY }}" \
+               -d '{"composeId":"${{ secrets.DOKPLOY_BACKEND_COMPOSE_ID }}"}'

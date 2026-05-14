@@ -12,7 +12,17 @@
 
 ## Deployment model
 
-Both applications are Docker Compose apps in Dokploy under the `aura-ia` project. GitHub Actions builds and pushes immutable images to GHCR, then calls the Dokploy deploy webhook. Dokploy only pulls and recreates containers; it does not build from source.
+Both applications are Docker Compose apps in Dokploy under the `aura-ia` project. GitHub Actions builds and pushes immutable images to GHCR, then calls the Dokploy API endpoint `POST /api/compose.deploy`. Dokploy only pulls and recreates containers; it does not build from source.
+
+GitHub Actions requires these repository secrets:
+
+- Backend repository: `DOKPLOY_API_URL`, `DOKPLOY_API_KEY`, `DOKPLOY_BACKEND_COMPOSE_ID`.
+- Frontend repository: `DOKPLOY_API_URL`, `DOKPLOY_API_KEY`, `DOKPLOY_FRONTEND_COMPOSE_ID`, `VITE_TURNSTILE_SITE_KEY`.
+
+Current Dokploy compose IDs:
+
+- Backend: `OjHAKcXJC0AkFmITmK2tA`
+- Frontend: `Y7KqolKyYBWz8gNpCONpH`
 
 Runtime secrets are stored only in Dokploy and GitHub Actions secrets. Do not commit `.env`, `.env.*`, `*.env`, `.mcp.json`, webhook URLs, API keys, JWT secrets, encryption keys or VAPID private keys.
 
@@ -40,7 +50,7 @@ Use Dokploy UI/MCP restart or redeploy after changing environment variables.
 
 ## Forced redeploy
 
-Run the corresponding GitHub Actions release workflow manually on `main` or call the Dokploy deploy webhook for the app after confirming the desired image tag exists in GHCR.
+Run the corresponding GitHub Actions release workflow manually on `main` or call `POST /api/compose.deploy` for the app after confirming the desired image tag exists in GHCR.
 
 ## Secret rotation
 
