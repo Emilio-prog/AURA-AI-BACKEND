@@ -3,7 +3,7 @@
 ## Production surfaces
 
 - Frontend: `https://aura-ia.es`
-- Frontend alias: `https://www.aura-ia.es` serves the same frontend. Configure an explicit `www` to apex redirect later if canonical-domain enforcement is required.
+- Frontend alias: `https://www.aura-ia.es` redirects permanently to the apex domain.
 - Backend API: `https://api.aura-ia.es`
 - Backend health: `https://api.aura-ia.es/actuator/health`
 - Backend image: `ghcr.io/emilio-prog/aura-ai-backend`

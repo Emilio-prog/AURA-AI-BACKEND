@@ -1,6 +1,7 @@
 services:
   aura-backend:
     image: ghcr.io/emilio-prog/aura-ai-backend:latest
+    pull_policy: always
     container_name: aura-backend
     restart: unless-stopped
     env_file:
