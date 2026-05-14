@@ -144,7 +144,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public AuthResponses.MessageResponse deleteCurrentAccount(UserRequests.DeleteAccountRequest request) {
         User user = currentUser();
-        validateAccountDeletion(user, request);
+        validateAccountDeletion(request);
         userDeletionService.deletePermanently(user);
         return new AuthResponses.MessageResponse("OK");
     }
@@ -180,14 +180,9 @@ public class UserServiceImpl implements UserService {
         return userExportPdfService.render(exportCurrentUserData());
     }
 
-    private void validateAccountDeletion(User user, UserRequests.DeleteAccountRequest request) {
+    private void validateAccountDeletion(UserRequests.DeleteAccountRequest request) {
         if (request == null || !"ELIMINAR MI CUENTA".equals(request.confirmationText())) {
             throw new BusinessException("error.account_delete_confirmation_required");
-        }
-        if (hasText(user.getPasswordHash())) {
-            if (!hasText(request.currentPassword()) || !passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
-                throw new BusinessException("error.current_password");
-            }
         }
     }
 
