@@ -1,0 +1,21 @@
+services:
+  aura-backend:
+    image: ghcr.io/emilio-prog/aura-ai-backend:latest
+    container_name: aura-backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    expose:
+      - "8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    networks:
+      - dokploy-network
+
+networks:
+  dokploy-network:
+    external: true
