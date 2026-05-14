@@ -22,7 +22,8 @@ spring:
     default-schema: public
     baseline-on-migrate: ${FLYWAY_BASELINE_ON_MIGRATE:true}
     baseline-version: ${FLYWAY_BASELINE_VERSION:1}
-    ignore-migration-patterns: ${SPRING_FLYWAY_IGNORE_MIGRATION_PATTERNS:}
+    out-of-order: ${SPRING_FLYWAY_OUT_OF_ORDER:false}
+    ignore-migration-patterns: "${SPRING_FLYWAY_IGNORE_MIGRATION_PATTERNS:*:missing}"
   mail:
     host: ${SMTP_HOST:localhost}
     port: ${SMTP_PORT:1025}

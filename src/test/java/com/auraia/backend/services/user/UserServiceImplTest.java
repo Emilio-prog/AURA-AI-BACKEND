@@ -227,8 +227,7 @@ class UserServiceImplTest {
     @Test
     void deleteCurrentAccountRequiresExactConfirmation() {
         UserRequests.DeleteAccountRequest request = new UserRequests.DeleteAccountRequest(
-            "BORRAR",
-            "secret"
+            "BORRAR"
         );
 
         assertThatThrownBy(() -> service.deleteCurrentAccount(request))
@@ -239,26 +238,9 @@ class UserServiceImplTest {
     }
 
     @Test
-    void deleteCurrentAccountRequiresPasswordForLocalAccount() {
+    void deleteCurrentAccountDeletesLocalAccountWithConfirmation() {
         UserRequests.DeleteAccountRequest request = new UserRequests.DeleteAccountRequest(
-            "ELIMINAR MI CUENTA",
-            null
-        );
-
-        assertThatThrownBy(() -> service.deleteCurrentAccount(request))
-            .isInstanceOf(BusinessException.class)
-            .hasMessage("error.current_password");
-
-        verify(userDeletionService, never()).deletePermanently(any(User.class));
-    }
-
-    @Test
-    void deleteCurrentAccountDeletesLocalAccountWithPassword() {
-        when(passwordEncoder.matches("secret", "hash")).thenReturn(true);
-
-        UserRequests.DeleteAccountRequest request = new UserRequests.DeleteAccountRequest(
-            "ELIMINAR MI CUENTA",
-            "secret"
+            "ELIMINAR MI CUENTA"
         );
 
         assertThat(service.deleteCurrentAccount(request).message()).isEqualTo("OK");
@@ -270,8 +252,7 @@ class UserServiceImplTest {
         user.setPasswordHash(null);
 
         UserRequests.DeleteAccountRequest request = new UserRequests.DeleteAccountRequest(
-            "ELIMINAR MI CUENTA",
-            null
+            "ELIMINAR MI CUENTA"
         );
 
         assertThat(service.deleteCurrentAccount(request).message()).isEqualTo("OK");
