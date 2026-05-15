@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-@Profile({"dev", "evaluator"})
+@Profile("dev")
 @RequiredArgsConstructor
 public class DevDataSeeder implements CommandLineRunner {
 
