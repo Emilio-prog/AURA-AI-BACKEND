@@ -58,6 +58,10 @@ dejar desactivadas las integraciones opcionales para arrancar en local:
 `AI_SERVICE_ENABLED=false`, `TURNSTILE_ENABLED=false`, `GOOGLE_OAUTH_ENABLED=false`,
 `WEB_PUSH_ENABLED=false` y `SOS_SMS_ENABLED=false`.
 
+Si el script `start-dev.ps1` se ejecuta en un clon limpio sin `.env`, copiara
+los `.env.example` necesarios y se detendra con un mensaje indicando que falta
+rellenar la configuracion del backend.
+
 Arranque completo desde la carpeta `AURA-IA`:
 
 ```powershell
@@ -184,7 +188,8 @@ To stop the local stack:
 - Frontend dev server: Vite logs `Local: http://localhost:5173/`.
 - API calls from the browser target `http://localhost:<SERVER_PORT>/api/v1`.
 - If API calls still target `127.0.0.1`, check `AURA-AI-FRONTEND/.env.local` and set `VITE_API_BASE_URL=http://localhost:<SERVER_PORT>/api/v1`.
-- On Windows, inspect the backend/frontend terminal windows. On macOS/Linux, inspect `.dev-logs/backend-dev.log` and `.dev-logs/frontend-dev.log`.
+- On Windows, inspect `.dev-logs/backend-dev.err.log`, `.dev-logs/backend-dev.out.log`, `.dev-logs/frontend-dev.err.log`, and `.dev-logs/frontend-dev.out.log`.
+- On macOS/Linux, inspect `.dev-logs/backend-dev.log` and `.dev-logs/frontend-dev.log`.
 - If Google OAuth is enabled locally, `GOOGLE_OAUTH_REDIRECT_URI` must match the backend URL, for example `http://localhost:8080/api/v1/auth/oauth/google/callback`.
 
 ## Version Control
