@@ -62,6 +62,23 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
+      - name: Validate Dokploy target
+        run: |
+          DOKPLOY_API_URL="${{ secrets.DOKPLOY_API_URL }}"
+          COMPOSE_ID="${{ secrets.DOKPLOY_BACKEND_COMPOSE_ID }}"
+
+          if [ -z "$DOKPLOY_API_URL" ] || [ -z "$COMPOSE_ID" ]; then
+            echo "::error::DOKPLOY_API_URL and DOKPLOY_BACKEND_COMPOSE_ID must point to the self-hosted Hostinger VPS Dokploy instance."
+            exit 1
+          fi
+
+          case "$DOKPLOY_API_URL" in
+            *dokploy.com*|*dokploy.cloud*|*cloud.dokploy*)
+              echo "::error::DOKPLOY_API_URL appears to point to Dokploy Cloud. Use the self-hosted Hostinger VPS Dokploy URL."
+              exit 1
+              ;;
+          esac
+
       - name: Trigger Dokploy deploy
         run: |
           DOKPLOY_API_URL="${{ secrets.DOKPLOY_API_URL }}"
