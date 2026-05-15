@@ -38,29 +38,20 @@ Requisitos minimos:
 - PostgreSQL accesible. Puede ser Supabase o una base local si se ajustan las
   variables `SPRING_DATASOURCE_*`.
 
-Archivos locales a crear despues del clonado:
+El arranque por defecto es autosuficiente para evaluacion: no requiere `.env`,
+credenciales externas ni PostgreSQL real. El script usa el perfil backend
+`evaluator`, con H2 en memoria, integraciones externas desactivadas y usuario
+demo creado automaticamente.
 
-```bash
-cp AURA-AI-BACKEND/.env.example AURA-AI-BACKEND/.env
-cp AURA-AI-FRONTEND/.env.example AURA-AI-FRONTEND/.env.local
+Credenciales demo:
+
+```text
+demo@aura.ai
+StrongPassword123!
 ```
 
-En Windows PowerShell:
-
-```powershell
-Copy-Item AURA-AI-BACKEND\.env.example AURA-AI-BACKEND\.env
-Copy-Item AURA-AI-FRONTEND\.env.example AURA-AI-FRONTEND\.env.local
-```
-
-Los archivos reales `.env` y `.env.local` no se suben a GitHub porque pueden
-contener credenciales. El evaluador debe rellenar la conexion PostgreSQL y puede
-dejar desactivadas las integraciones opcionales para arrancar en local:
-`AI_SERVICE_ENABLED=false`, `TURNSTILE_ENABLED=false`, `GOOGLE_OAUTH_ENABLED=false`,
-`WEB_PUSH_ENABLED=false` y `SOS_SMS_ENABLED=false`.
-
-Si el script `start-dev.ps1` se ejecuta en un clon limpio sin `.env`, copiara
-los `.env.example` necesarios y se detendra con un mensaje indicando que falta
-rellenar la configuracion del backend.
+El script crea `AURA-AI-FRONTEND/.env.local` desde `.env.example` si falta. No
+crea ni exige `AURA-AI-BACKEND/.env` en modo evaluador.
 
 Arranque completo desde la carpeta `AURA-IA`:
 
@@ -179,6 +170,18 @@ To stop the local stack:
 
 ```bash
 ./AURA-AI-FRONTEND/scripts/start-dev.sh stop
+```
+
+To run against a real PostgreSQL/Supabase database, use the advanced `-RealEnv`
+mode on Windows or `real-env` on macOS/Linux. In that case
+`AURA-AI-BACKEND/.env` with credentials is required:
+
+```powershell
+.\AURA-AI-FRONTEND\scripts\start-dev.ps1 -RealEnv
+```
+
+```bash
+./AURA-AI-FRONTEND/scripts/start-dev.sh real-env
 ```
 
 ### Verification after the changes
