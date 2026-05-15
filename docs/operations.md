@@ -9,21 +9,27 @@
 - Backend image: `ghcr.io/emilio-prog/aura-ai-backend`
 - Frontend image: `ghcr.io/emilio-prog/aura-ai-frontend`
 - Database: Supabase PostgreSQL. Do not deploy a database container in Dokploy.
-- Dokploy panel: Hostinger VPS `187.127.232.186`.
+- Dokploy panel: the self-hosted Dokploy instance installed on the Hostinger VPS.
 
 ## Deployment model
 
 Both applications are Docker Compose apps in Dokploy under the `aura-ia` project. GitHub Actions builds and pushes immutable images to GHCR, then calls the Dokploy API endpoint `POST /api/compose.deploy`. Dokploy only pulls and recreates containers; it does not build from source.
+
+The production source of truth is the self-hosted Dokploy instance installed on the Hostinger VPS. Do not use Dokploy Cloud, old Dokploy Cloud server entries, or compose IDs from a removed SSH connection. If the Dokploy MCP/API shows a deleted Cloud server, ignore it for production and reconfigure the integration against the Hostinger VPS Dokploy instance.
 
 GitHub Actions requires these repository secrets:
 
 - Backend repository: `DOKPLOY_API_URL`, `DOKPLOY_API_KEY`, `DOKPLOY_BACKEND_COMPOSE_ID`.
 - Frontend repository: `DOKPLOY_API_URL`, `DOKPLOY_API_KEY`, `DOKPLOY_FRONTEND_COMPOSE_ID`, `VITE_TURNSTILE_SITE_KEY`.
 
-Current Dokploy compose IDs:
+These values must come from the Hostinger VPS Dokploy instance:
 
-- Backend: `OjHAKcXJC0AkFmITmK2tA`
-- Frontend: `Y7KqolKyYBWz8gNpCONpH`
+- `DOKPLOY_API_URL`: public URL of the self-hosted Hostinger Dokploy panel, without a trailing slash.
+- `DOKPLOY_API_KEY`: API key generated inside the self-hosted Hostinger Dokploy panel.
+- `DOKPLOY_BACKEND_COMPOSE_ID`: compose ID for the `aura-backend` compose in the self-hosted Hostinger Dokploy panel.
+- `DOKPLOY_FRONTEND_COMPOSE_ID`: compose ID for the `aura-frontend` compose in the self-hosted Hostinger Dokploy panel.
+
+Do not copy compose IDs, server IDs, API keys or webhook values from Dokploy Cloud. A successful GitHub Actions `curl` only proves that an API accepted the request; it does not prove that the active Hostinger VPS instance was targeted unless these secrets point to the self-hosted Dokploy URL.
 
 Runtime secrets are stored only in Dokploy and GitHub Actions secrets. Do not commit `.env`, `.env.*`, `*.env`, `.mcp.json`, webhook URLs, API keys, JWT secrets, encryption keys or VAPID private keys.
 
