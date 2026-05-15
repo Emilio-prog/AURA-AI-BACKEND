@@ -1,6 +1,5 @@
 package com.auraia.backend.services.auth;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -11,7 +10,6 @@ import com.auraia.backend.config.AppProperties;
 import com.auraia.backend.exceptions.BusinessException;
 import com.auraia.backend.mappers.UserMapper;
 import com.auraia.backend.models.dto.request.AuthRequests;
-import com.auraia.backend.models.entities.EmailVerificationToken;
 import com.auraia.backend.models.entities.User;
 import com.auraia.backend.models.enums.Plan;
 import com.auraia.backend.models.enums.Role;
@@ -99,7 +97,7 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void registerResendsVerificationWhenEmailExistsButIsNotVerified() {
+    void registerRejectsEmailWhenExistingAccountIsNotVerified() {
         User user = User.builder()
             .email("pending@example.com")
             .passwordHash("hash")
@@ -112,18 +110,15 @@ class AuthServiceImplTest {
         when(turnstileService.verify(null, null)).thenReturn(true);
         when(userRepository.findByEmailIgnoreCase("pending@example.com")).thenReturn(Optional.of(user));
 
-        var response = service.register(new AuthRequests.RegisterRequest(
+        assertThatThrownBy(() -> service.register(new AuthRequests.RegisterRequest(
             "Pending User",
             "pending@example.com",
             "StrongPassword123!",
             null
-        ));
+        ))).isInstanceOf(BusinessException.class);
 
-        assertThat(response.email()).isEqualTo("pending@example.com");
-        assertThat(response.message()).isEqualTo("Verification email sent.");
-        assertThat(response.requiresVerification()).isTrue();
-        verify(verificationTokenRepository).save(any(EmailVerificationToken.class));
-        verify(verificationEmailService).sendVerificationEmail(any(User.class), any(String.class));
+        verify(verificationTokenRepository, never()).save(any());
+        verify(verificationEmailService, never()).sendVerificationEmail(any(User.class), any(String.class));
         verify(passwordPolicyValidator, never()).validate(any(String.class));
     }
 
