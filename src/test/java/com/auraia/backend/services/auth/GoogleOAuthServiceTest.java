@@ -141,6 +141,80 @@ class GoogleOAuthServiceTest {
     }
 
     @Test
+    void callbackCanReturnToAllowedLocalFrontendFromState() {
+        properties.setFrontendBaseUrl("https://aura-ia.es");
+        when(stateRepository.save(any(OAuthState.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(googleOAuthClient.authorizationUrl(any())).thenReturn("https://accounts.google.com/o/oauth2/v2/auth?state=raw");
+
+        service.startLogin("http://localhost:5173");
+
+        ArgumentCaptor<String> rawState = ArgumentCaptor.forClass(String.class);
+        verify(googleOAuthClient).authorizationUrl(rawState.capture());
+        OAuthState state = OAuthState.builder()
+            .stateHash(TokenHashing.sha256(rawState.getValue()))
+            .flow("LOGIN")
+            .expiresAt(Instant.now().plusSeconds(60))
+            .build();
+        when(stateRepository.findByStateHash(TokenHashing.sha256(rawState.getValue()))).thenReturn(Optional.of(state));
+        when(googleOAuthClient.fetchUser("google-code")).thenReturn(new GoogleOAuthUser(
+            "google-sub",
+            "New.User@Example.com",
+            true,
+            "New User"
+        ));
+        when(identityRepository.findByProviderAndProviderSubjectAndActiveTrue("GOOGLE", "google-sub"))
+            .thenReturn(Optional.empty());
+        when(userRepository.findByEmailIgnoreCase("new.user@example.com")).thenReturn(Optional.empty());
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
+            User user = invocation.getArgument(0);
+            user.setId(UUID.randomUUID());
+            return user;
+        });
+        when(identityRepository.findByUserAndProviderAndActiveTrue(any(User.class), any())).thenReturn(Optional.empty());
+
+        String redirect = service.handleCallback(rawState.getValue(), "google-code", null);
+
+        assertThat(redirect).startsWith("http://localhost:5173/#/auth/google/callback?code=");
+    }
+
+    @Test
+    void callbackFallsBackToConfiguredFrontendWhenStateContainsUntrustedOrigin() {
+        properties.setFrontendBaseUrl("https://aura-ia.es");
+        when(stateRepository.save(any(OAuthState.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(googleOAuthClient.authorizationUrl(any())).thenReturn("https://accounts.google.com/o/oauth2/v2/auth?state=raw");
+
+        service.startLogin("https://evil.example");
+
+        ArgumentCaptor<String> rawState = ArgumentCaptor.forClass(String.class);
+        verify(googleOAuthClient).authorizationUrl(rawState.capture());
+        OAuthState state = OAuthState.builder()
+            .stateHash(TokenHashing.sha256(rawState.getValue()))
+            .flow("LOGIN")
+            .expiresAt(Instant.now().plusSeconds(60))
+            .build();
+        when(stateRepository.findByStateHash(TokenHashing.sha256(rawState.getValue()))).thenReturn(Optional.of(state));
+        when(googleOAuthClient.fetchUser("google-code")).thenReturn(new GoogleOAuthUser(
+            "google-sub",
+            "New.User@Example.com",
+            true,
+            "New User"
+        ));
+        when(identityRepository.findByProviderAndProviderSubjectAndActiveTrue("GOOGLE", "google-sub"))
+            .thenReturn(Optional.empty());
+        when(userRepository.findByEmailIgnoreCase("new.user@example.com")).thenReturn(Optional.empty());
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
+            User user = invocation.getArgument(0);
+            user.setId(UUID.randomUUID());
+            return user;
+        });
+        when(identityRepository.findByUserAndProviderAndActiveTrue(any(User.class), any())).thenReturn(Optional.empty());
+
+        String redirect = service.handleCallback(rawState.getValue(), "google-code", null);
+
+        assertThat(redirect).startsWith("https://aura-ia.es/#/auth/google/callback?code=");
+    }
+
+    @Test
     void callbackRejectsUnverifiedGoogleEmail() {
         OAuthState state = OAuthState.builder()
             .stateHash(TokenHashing.sha256("raw-state"))
