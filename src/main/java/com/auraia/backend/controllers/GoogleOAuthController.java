@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,8 +25,10 @@ public class GoogleOAuthController {
     private final GoogleOAuthService googleOAuthService;
 
     @PostMapping("/start")
-    public AuthResponses.OAuthStartResponse startLogin() {
-        return googleOAuthService.startLogin();
+    public AuthResponses.OAuthStartResponse startLogin(
+        @RequestHeader(value = "X-Aura-Frontend-Base-Url", required = false) String frontendBaseUrl
+    ) {
+        return googleOAuthService.startLogin(frontendBaseUrl);
     }
 
     @GetMapping("/callback")
@@ -48,8 +51,10 @@ public class GoogleOAuthController {
     }
 
     @PostMapping("/link/start")
-    public AuthResponses.OAuthStartResponse startLink() {
-        return googleOAuthService.startLink();
+    public AuthResponses.OAuthStartResponse startLink(
+        @RequestHeader(value = "X-Aura-Frontend-Base-Url", required = false) String frontendBaseUrl
+    ) {
+        return googleOAuthService.startLink(frontendBaseUrl);
     }
 
     @DeleteMapping("/link")
