@@ -3,10 +3,12 @@ package com.auraia.backend.config;
 import com.auraia.backend.security.AuthRateLimitFilter;
 import com.auraia.backend.security.AiChatRateLimitFilter;
 import com.auraia.backend.security.jwt.JwtAuthFilter;
+import java.util.Arrays;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -29,7 +31,14 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    private static final String[] SWAGGER_ENDPOINTS = {
+        "/swagger-ui.html",
+        "/swagger-ui/**",
+        "/v3/api-docs/**"
+    };
+
     private final AppProperties appProperties;
+    private final Environment environment;
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http,
@@ -47,24 +56,29 @@ public class SecurityConfig {
             .exceptionHandling(exceptions -> exceptions
                 .authenticationEntryPoint((request, response, ex) -> response.sendError(HttpStatus.UNAUTHORIZED.value()))
                 .accessDeniedHandler((request, response, ex) -> response.sendError(HttpStatus.FORBIDDEN.value())))
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
-                .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.POST, "/api/v1/webhooks/**").permitAll()
-                .requestMatchers(HttpMethod.POST,
-                    "/api/v1/auth/register",
-                    "/api/v1/auth/login",
-                    "/api/v1/auth/oauth/google/start",
-                    "/api/v1/auth/oauth/google/exchange",
-                    "/api/v1/auth/refresh",
-                    "/api/v1/auth/logout",
-                    "/api/v1/auth/verify-email",
-                    "/api/v1/auth/resend-verification",
-                    "/api/v1/auth/forgot-password",
-                    "/api/v1/auth/reset-password").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/v1/auth/oauth/google/callback").permitAll()
-                .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
-                .anyRequest().authenticated())
+            .authorizeHttpRequests(auth -> {
+                auth.requestMatchers(HttpMethod.GET, "/actuator/health").permitAll();
+                if (isProductionProfile()) {
+                    auth.requestMatchers(SWAGGER_ENDPOINTS).hasRole("ADMIN");
+                } else {
+                    auth.requestMatchers(SWAGGER_ENDPOINTS).permitAll();
+                }
+                auth.requestMatchers(HttpMethod.POST, "/api/v1/webhooks/**").permitAll()
+                    .requestMatchers(HttpMethod.POST,
+                        "/api/v1/auth/register",
+                        "/api/v1/auth/login",
+                        "/api/v1/auth/oauth/google/start",
+                        "/api/v1/auth/oauth/google/exchange",
+                        "/api/v1/auth/refresh",
+                        "/api/v1/auth/logout",
+                        "/api/v1/auth/verify-email",
+                        "/api/v1/auth/resend-verification",
+                        "/api/v1/auth/forgot-password",
+                        "/api/v1/auth/reset-password").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/auth/oauth/google/callback").permitAll()
+                    .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                    .anyRequest().authenticated();
+            })
             .addFilterBefore(authRateLimitFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterAfter(aiChatRateLimitFilter, JwtAuthFilter.class);
@@ -88,6 +102,11 @@ public class SecurityConfig {
     @Bean
     PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(12);
+    }
+
+    private boolean isProductionProfile() {
+        return Arrays.stream(environment.getActiveProfiles())
+            .anyMatch("prod"::equalsIgnoreCase);
     }
 
     @Bean
