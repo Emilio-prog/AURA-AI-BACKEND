@@ -9,6 +9,8 @@ target/
 .mvn/maven-user-home/
 .mvn/maven-repository/
 *.log
+logs/
+.dev-logs/
 *.tmp
 .idea/
 .vscode/
