@@ -8,7 +8,73 @@ Spring Boot backend for the AURA IA user panel. It owns authentication, PostgreS
 - Docker, only for Testcontainers integration tests
 - Supabase PostgreSQL connection string for dev/prod runtime
 
-This repository includes Maven Wrapper scripts. The wrapper downloads its own Maven runtime the first time it runs. On this workstation it auto-detects the installed JDK 21 under `C:\Users\Usuario\.jdks\ms-21.0.10`.
+This repository includes Maven Wrapper scripts. The wrapper downloads its own Maven runtime the first time it runs. The machine must expose JDK 21 through `JAVA_HOME` or `PATH`.
+
+## Instalacion local limpia para evaluador
+
+AURA IA se entrega en dos repositorios Git independientes. Para levantar la
+aplicacion completa con los scripts versionados, clona backend y frontend como
+carpetas hermanas dentro de una misma carpeta de trabajo:
+
+```text
+AURA-IA/
+|-- AURA-AI-BACKEND/
+`-- AURA-AI-FRONTEND/
+```
+
+Clonado recomendado:
+
+```bash
+mkdir AURA-IA
+cd AURA-IA
+git clone https://github.com/Emilio-prog/AURA-AI-BACKEND.git
+git clone https://github.com/Emilio-prog/AURA-AI-FRONTEND.git
+```
+
+Requisitos minimos:
+
+- JDK 21. Esta version esta fijada en `pom.xml` mediante `<java.version>21</java.version>`.
+- Node.js 20 o superior para el frontend.
+- PostgreSQL accesible. Puede ser Supabase o una base local si se ajustan las
+  variables `SPRING_DATASOURCE_*`.
+
+Archivos locales a crear despues del clonado:
+
+```bash
+cp AURA-AI-BACKEND/.env.example AURA-AI-BACKEND/.env
+cp AURA-AI-FRONTEND/.env.example AURA-AI-FRONTEND/.env.local
+```
+
+En Windows PowerShell:
+
+```powershell
+Copy-Item AURA-AI-BACKEND\.env.example AURA-AI-BACKEND\.env
+Copy-Item AURA-AI-FRONTEND\.env.example AURA-AI-FRONTEND\.env.local
+```
+
+Los archivos reales `.env` y `.env.local` no se suben a GitHub porque pueden
+contener credenciales. El evaluador debe rellenar la conexion PostgreSQL y puede
+dejar desactivadas las integraciones opcionales para arrancar en local:
+`AI_SERVICE_ENABLED=false`, `TURNSTILE_ENABLED=false`, `GOOGLE_OAUTH_ENABLED=false`,
+`WEB_PUSH_ENABLED=false` y `SOS_SMS_ENABLED=false`.
+
+Arranque completo desde la carpeta `AURA-IA`:
+
+```powershell
+.\AURA-AI-FRONTEND\scripts\start-dev.ps1
+```
+
+```bash
+chmod +x AURA-AI-FRONTEND/scripts/start-dev.sh
+./AURA-AI-FRONTEND/scripts/start-dev.sh
+```
+
+Verificacion rapida:
+
+- El navegador abre `http://localhost:5173`.
+- El backend responde `GET http://localhost:8080/actuator/health` con
+  `{"status":"UP"}`.
+- Swagger local queda disponible en `http://localhost:8080/swagger-ui.html`.
 
 ## Configuration
 
