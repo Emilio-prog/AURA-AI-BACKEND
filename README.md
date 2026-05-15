@@ -35,23 +35,16 @@ Requisitos minimos:
 
 - JDK 21. Esta version esta fijada en `pom.xml` mediante `<java.version>21</java.version>`.
 - Node.js 20 o superior para el frontend.
-- PostgreSQL accesible. Puede ser Supabase o una base local si se ajustan las
-  variables `SPRING_DATASOURCE_*`.
 
-El arranque por defecto es autosuficiente para evaluacion: no requiere `.env`,
-credenciales externas ni PostgreSQL real. El script usa el perfil backend
-`evaluator`, con H2 en memoria, integraciones externas desactivadas y usuario
-demo creado automaticamente.
+El arranque por defecto del script del frontend esta pensado para el
+tutor/evaluador: no requiere `.env`, credenciales externas, PostgreSQL local,
+H2 ni usuarios demo. Ese modo no arranca este backend en local; arranca Vite en
+`http://localhost:5173` y usa un proxy de desarrollo hacia el backend real
+desplegado en `https://api.aura-ia.es`.
 
-Credenciales demo:
-
-```text
-demo@aura.ai
-StrongPassword123!
-```
-
-El script crea `AURA-AI-FRONTEND/.env.local` desde `.env.example` si falta. No
-crea ni exige `AURA-AI-BACKEND/.env` en modo evaluador.
+Para arrancar este backend en local si hace falta PostgreSQL/Supabase real y
+`AURA-AI-BACKEND/.env` con las variables `SPRING_DATASOURCE_*`, `JWT_SECRET` y
+el resto de integraciones que se quieran probar.
 
 Arranque completo desde la carpeta `AURA-IA`:
 
@@ -67,9 +60,9 @@ chmod +x AURA-AI-FRONTEND/scripts/start-dev.sh
 Verificacion rapida:
 
 - El navegador abre `http://localhost:5173`.
-- El backend responde `GET http://localhost:8080/actuator/health` con
-  `{"status":"UP"}`.
-- Swagger local queda disponible en `http://localhost:8080/swagger-ui.html`.
+- En modo tutor, las llamadas a `http://localhost:5173/api/v1/*` llegan al
+  backend real `https://api.aura-ia.es/api/v1/*` mediante el proxy de Vite.
+- En modo backend local, Swagger queda disponible en `http://localhost:8080/swagger-ui.html`.
 
 ## Configuration
 
