@@ -2,6 +2,60 @@
 
 Backend Spring Boot para el panel de usuario de AURA IA. Gestiona la autenticacion, la persistencia en PostgreSQL, los datos de usuario, la facturacion y la integracion con Gemini.
 
+## Estado actual en GitHub
+
+- Rama estable: `main`.
+- Version actual del backend: `v0.2.15`.
+- Flujo de ramas: `feature` -> `develop` -> `release` -> `main`; `hotfix` queda alineada con `main`.
+- El README esta orientado al tutor/evaluador, al despliegue publico actual y al mantenimiento tecnico del backend.
+- No hay usuarios demo ni base de datos H2 para el modo tutor.
+
+## Stack
+
+- Java 21
+- Spring Boot 3.3.5
+- Maven Wrapper
+- PostgreSQL/Supabase
+- Spring Data JPA + Flyway
+- Spring Security + JWT
+- Bean Validation
+- Spring Mail + Thymeleaf para emails HTML
+- Springdoc OpenAPI / Swagger UI
+- MapStruct
+- Testcontainers PostgreSQL para tests de integracion opt-in
+- Docker multi-stage: Eclipse Temurin JDK 21 -> Eclipse Temurin JRE 21
+
+## Estructura del repositorio
+
+```text
+AURA-AI-BACKEND/
+|-- src/
+|   |-- main/
+|   |   |-- java/com/auraia/backend/
+|   |   |   |-- clients/       # Integraciones salientes, Gemini y DTOs externos
+|   |   |   |-- config/        # Configuracion Spring, seguridad, OpenAPI y propiedades
+|   |   |   |-- controllers/   # Endpoints REST
+|   |   |   |-- exceptions/    # Excepciones y handler global
+|   |   |   |-- mappers/       # Mapeo DTO/entidad con MapStruct
+|   |   |   |-- models/        # Entidades JPA, DTOs y enums
+|   |   |   |-- repositories/  # Repositorios Spring Data JPA
+|   |   |   |-- security/      # Filtros, JWT y usuario autenticado
+|   |   |   |-- services/      # Logica de negocio por modulo
+|   |   |   `-- utils/         # Utilidades compartidas
+|   |   `-- resources/
+|   |       |-- db/migration/  # Migraciones Flyway
+|   |       `-- templates/     # Plantillas HTML de email
+|   `-- test/                 # Tests unitarios e integracion opt-in
+|-- deploy/                   # Compose y plantilla de entorno para Dokploy
+|-- docs/                     # Operaciones, politica Flyway y Stripe produccion
+|-- .github/workflows/        # CI y release hacia GHCR/Dokploy
+|-- .mvn/                     # Configuracion de Maven Wrapper y repo local ignorado
+|-- Dockerfile                # Build multi-stage del backend
+`-- pom.xml                   # Dependencias, plugins y version Java
+```
+
+Los artefactos generados (`target/`, `.mvn/maven-repository/`, `.mvn/maven-user-home/`, logs y `.dev-logs/`) no se versionan.
+
 ## Requisitos
 
 - JDK 21
@@ -146,7 +200,16 @@ chmod +x AURA-AI-FRONTEND/scripts/start-dev.sh
 ./AURA-AI-FRONTEND/scripts/start-dev.sh
 ```
 
-Los scripts arrancan el backend en `http://localhost:8080`, el frontend en `http://localhost:5173`, esperan a que ambos servicios respondan y abren el navegador en `http://localhost:5173`.
+Por defecto, los scripts arrancan el frontend en `http://localhost:5173`,
+configuran `VITE_API_BASE_URL=/api/v1`, proxifican esas llamadas al backend
+real desplegado en `https://api.aura-ia.es` y abren el navegador cuando Vite
+responde. Este modo es el recomendado para el tutor/evaluador porque no exige
+credenciales locales.
+
+Para arrancar tambien este backend en local, usa el modo avanzado
+`-LocalBackend` en Windows o `local-backend` en macOS/Linux. En ese modo el
+backend escucha normalmente en `http://localhost:8080`, salvo que
+`AURA-AI-BACKEND/.env` defina otro `SERVER_PORT`.
 
 Si `AURA-AI-BACKEND/.env` define `SERVER_PORT`, los scripts usan ese puerto real del backend y muestran un aviso. Mantener alineados el entorno local del frontend y el callback OAuth:
 
@@ -165,17 +228,19 @@ Para parar el stack local:
 ./AURA-AI-FRONTEND/scripts/start-dev.sh stop
 ```
 
-Para ejecutar contra una base de datos real PostgreSQL/Supabase, usa el modo avanzado `-RealEnv`
-en Windows o `real-env` en macOS/Linux. En ese caso se requiere
+Para ejecutar contra una base de datos real PostgreSQL/Supabase, se requiere
 `AURA-AI-BACKEND/.env` con credenciales:
 
 ```powershell
-.\AURA-AI-FRONTEND\scripts\start-dev.ps1 -RealEnv
+.\AURA-AI-FRONTEND\scripts\start-dev.ps1 -LocalBackend
 ```
 
 ```bash
-./AURA-AI-FRONTEND/scripts/start-dev.sh real-env
+./AURA-AI-FRONTEND/scripts/start-dev.sh local-backend
 ```
+
+`-RealEnv` y `real-env` siguen aceptados por compatibilidad como alias del
+modo backend local.
 
 ### Verificacion tras los cambios
 
@@ -309,6 +374,15 @@ Los tests de integracion usan Testcontainers PostgreSQL y son opt-in para que la
 ```bash
 ./mvnw test -Daura.integration-tests=true
 ```
+
+## Notas de organizacion
+
+- `src/main/java/com/auraia/backend` mantiene separacion por capas tecnicas: controladores, servicios, repositorios, modelos, seguridad, clientes externos y configuracion.
+- Las migraciones Flyway permanecen en `src/main/resources/db/migration/`; no se mueven porque Flyway las descubre por convencion.
+- Las plantillas de email permanecen en `src/main/resources/templates/email/`; no se mueven porque Thymeleaf las resuelve desde resources.
+- `deploy/` contiene los archivos consumidos por Dokploy y debe quedar versionado.
+- `docs/` contiene documentacion operativa que no entra en la imagen Docker gracias a `.dockerignore`.
+- `.mvn/maven.config` fija `-Dmaven.repo.local=.mvn/maven-repository`; esa carpeta es cache local ignorada, no codigo fuente.
 
 ## Notas de contrato con el frontend
 
