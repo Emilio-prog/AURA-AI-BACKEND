@@ -62,11 +62,6 @@ public class AuthServiceImpl implements AuthService {
         String email = normalizeEmail(request.email());
         var existingUser = userRepository.findByEmailIgnoreCase(email);
         if (existingUser.isPresent()) {
-            User user = existingUser.get();
-            if (!user.isDeleted() && !user.isEmailVerified()) {
-                createAndSendVerificationToken(user);
-                return new AuthResponses.PendingVerificationResponse(email, message("auth.email.sent"), true);
-            }
             throw new BusinessException("error.email_in_use");
         }
         passwordPolicyValidator.validate(request.password());
