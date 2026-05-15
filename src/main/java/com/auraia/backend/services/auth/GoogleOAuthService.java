@@ -20,11 +20,15 @@ import com.auraia.backend.repositories.UserRepository;
 import com.auraia.backend.repositories.UserSettingsRepository;
 import com.auraia.backend.security.SecurityUtils;
 import com.auraia.backend.utils.TokenHashing;
+import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.LinkedHashSet;
 import java.util.Locale;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -38,6 +42,8 @@ public class GoogleOAuthService {
     private static final String PROVIDER_GOOGLE = "GOOGLE";
     private static final String FLOW_LOGIN = "LOGIN";
     private static final String FLOW_LINK = "LINK";
+    private static final String LOCALHOST_FRONTEND_BASE_URL = "http://localhost:5173";
+    private static final String LOOPBACK_FRONTEND_BASE_URL = "http://127.0.0.1:5173";
 
     private final AppProperties properties;
     private final GoogleOAuthClient googleOAuthClient;
@@ -50,23 +56,34 @@ public class GoogleOAuthService {
 
     @Transactional
     public AuthResponses.OAuthStartResponse startLogin() {
+        return startLogin(null);
+    }
+
+    @Transactional
+    public AuthResponses.OAuthStartResponse startLogin(String frontendBaseUrl) {
         ensureEnabled();
-        String state = createState(null, FLOW_LOGIN);
+        String state = createState(null, FLOW_LOGIN, frontendBaseUrl);
         return new AuthResponses.OAuthStartResponse(googleOAuthClient.authorizationUrl(state));
     }
 
     @Transactional
     public AuthResponses.OAuthStartResponse startLink() {
+        return startLink(null);
+    }
+
+    @Transactional
+    public AuthResponses.OAuthStartResponse startLink(String frontendBaseUrl) {
         ensureEnabled();
         User user = currentUser();
-        String state = createState(user, FLOW_LINK);
+        String state = createState(user, FLOW_LINK, frontendBaseUrl);
         return new AuthResponses.OAuthStartResponse(googleOAuthClient.authorizationUrl(state));
     }
 
     @Transactional
     public String handleCallback(String state, String code, String providerError) {
+        String callbackBaseUrl = callbackBaseUrlFromState(state);
         if (providerError != null && !providerError.isBlank()) {
-            return frontendCallbackUrl("error", "Google rechazo la autorizacion.");
+            return frontendCallbackUrl(callbackBaseUrl, "error", "Google rechazo la autorizacion.");
         }
         try {
             if (state == null || state.isBlank() || code == null || code.isBlank()) {
@@ -90,13 +107,13 @@ public class GoogleOAuthService {
             stateRepository.save(oauthState);
 
             String exchangeCode = createExchangeCode(user, now);
-            return frontendCallbackUrl("code", exchangeCode);
+            return frontendCallbackUrl(callbackBaseUrl, "code", exchangeCode);
         } catch (BusinessException ex) {
             log.warn("Google OAuth callback rejected: {}", ex.getMessage());
-            return frontendCallbackUrl("error", "No se pudo iniciar sesion con Google.");
+            return frontendCallbackUrl(callbackBaseUrl, "error", "No se pudo iniciar sesion con Google.");
         } catch (Exception ex) {
             log.warn("Google OAuth callback failed", ex);
-            return frontendCallbackUrl("error", "No se pudo iniciar sesion con Google.");
+            return frontendCallbackUrl(callbackBaseUrl, "error", "No se pudo iniciar sesion con Google.");
         }
     }
 
@@ -138,8 +155,8 @@ public class GoogleOAuthService {
         return new AuthResponses.MessageResponse("OK");
     }
 
-    private String createState(User user, String flow) {
-        String rawState = TokenHashing.newOpaqueToken();
+    private String createState(User user, String flow, String frontendBaseUrl) {
+        String rawState = TokenHashing.newOpaqueToken() + "." + encodeFrontendBaseUrl(frontendBaseUrl);
         OAuthState state = OAuthState.builder()
             .user(user)
             .stateHash(TokenHashing.sha256(rawState))
@@ -240,10 +257,69 @@ public class GoogleOAuthService {
             .orElseThrow(() -> new UnauthorizedException("Authentication required"));
     }
 
-    private String frontendCallbackUrl(String paramName, String value) {
-        String base = properties.getFrontendBaseUrl();
+    private String frontendCallbackUrl(String base, String paramName, String value) {
         String separator = base.endsWith("/") ? "" : "/";
         return base + separator + "#/auth/google/callback?" + paramName + "=" + URLEncoder.encode(value, StandardCharsets.UTF_8);
+    }
+
+    private String callbackBaseUrlFromState(String state) {
+        if (state == null || state.isBlank()) {
+            return normalizeFrontendBaseUrl(properties.getFrontendBaseUrl());
+        }
+        int separator = state.lastIndexOf('.');
+        if (separator < 0 || separator == state.length() - 1) {
+            return normalizeFrontendBaseUrl(properties.getFrontendBaseUrl());
+        }
+        try {
+            String encoded = state.substring(separator + 1);
+            String decoded = new String(Base64.getUrlDecoder().decode(encoded), StandardCharsets.UTF_8);
+            return normalizeFrontendBaseUrl(decoded);
+        } catch (IllegalArgumentException ex) {
+            return normalizeFrontendBaseUrl(properties.getFrontendBaseUrl());
+        }
+    }
+
+    private String encodeFrontendBaseUrl(String frontendBaseUrl) {
+        String normalized = normalizeFrontendBaseUrl(frontendBaseUrl);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(normalized.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private String normalizeFrontendBaseUrl(String candidate) {
+        String fallback = trimTrailingSlash(properties.getFrontendBaseUrl());
+        if (candidate == null || candidate.isBlank()) {
+            return fallback;
+        }
+        String normalized = trimTrailingSlash(candidate);
+        try {
+            URI uri = URI.create(normalized);
+            if (uri.getScheme() == null || uri.getHost() == null || uri.getPath() != null && !uri.getPath().isBlank()) {
+                return fallback;
+            }
+            return allowedFrontendBaseUrls().contains(normalized) ? normalized : fallback;
+        } catch (IllegalArgumentException ex) {
+            return fallback;
+        }
+    }
+
+    private Set<String> allowedFrontendBaseUrls() {
+        Set<String> allowed = new LinkedHashSet<>();
+        allowed.add(trimTrailingSlash(properties.getFrontendBaseUrl()));
+        allowed.add(LOCALHOST_FRONTEND_BASE_URL);
+        allowed.add(LOOPBACK_FRONTEND_BASE_URL);
+        allowed.add("https://aura-ia.es");
+        allowed.add("https://www.aura-ia.es");
+        return allowed;
+    }
+
+    private String trimTrailingSlash(String value) {
+        if (value == null || value.isBlank()) {
+            return LOCALHOST_FRONTEND_BASE_URL;
+        }
+        String trimmed = value.trim();
+        while (trimmed.endsWith("/") && trimmed.length() > 1) {
+            trimmed = trimmed.substring(0, trimmed.length() - 1);
+        }
+        return trimmed;
     }
 
     private String displayName(GoogleOAuthUser googleUser, String email) {
