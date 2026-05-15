@@ -227,12 +227,13 @@ Los detalles del despliegue en produccion estan documentados en [`docs/stripe-pr
 ## Flujo de autenticacion
 
 1. `POST /api/v1/auth/register` crea el usuario y devuelve `202 Accepted`.
-2. En produccion, se envia un email de verificacion a `${FRONTEND_BASE_URL}/#/verify-email?token=...` para el frontend actual con HashRouter.
-3. En desarrollo, si `EMAIL_ENABLED=false` y `EMAIL_AUTO_VERIFY_WHEN_DISABLED=true`, la cuenta se verifica inmediatamente.
-4. `POST /api/v1/auth/verify-email?token=...` verifica la cuenta cuando la verificacion por email esta activa.
-5. `POST /api/v1/auth/login` devuelve `accessToken` y `refreshToken`.
-6. `POST /api/v1/auth/refresh` rota el refresh token.
-7. `POST /api/v1/auth/logout` revoca el refresh token actual.
+2. Si el email ya existe, devuelve error `400` con el mensaje `No te puedes registrar con el mismo correo.`.
+3. En produccion, se envia un email de verificacion a `${FRONTEND_BASE_URL}/#/verify-email?token=...` para el frontend actual con HashRouter.
+4. En desarrollo, si `EMAIL_ENABLED=false` y `EMAIL_AUTO_VERIFY_WHEN_DISABLED=true`, la cuenta se verifica inmediatamente.
+5. `POST /api/v1/auth/verify-email?token=...` verifica la cuenta cuando la verificacion por email esta activa.
+6. `POST /api/v1/auth/login` devuelve `accessToken` y `refreshToken`.
+7. `POST /api/v1/auth/refresh` rota el refresh token.
+8. `POST /api/v1/auth/logout` revoca el refresh token actual.
 
 Los usuarios no pueden iniciar sesion hasta que el email este verificado. Las contrasenas requieren 12 caracteres con mayuscula, minuscula, numero y simbolo.
 
@@ -314,6 +315,7 @@ Los tests de integracion usan Testcontainers PostgreSQL y son opt-in para que la
 El backend expone el contrato seguro consumido por el frontend actual:
 
 - El registro devuelve verificacion pendiente, no tokens.
-- La contrasena demo debe ser fuerte si se inicializa desde backend.
+- La interfaz no expone credenciales demo; el login usa cuentas reales registradas/verificadas.
+- El registro con un email existente se rechaza con un error localizado.
 - Mood usa `beforeLevel` y `afterLevel` de 1 a 10.
 - Los nombres de campos JSON de la API son estables en ingles; los mensajes se localizan mediante `Accept-Language`.
