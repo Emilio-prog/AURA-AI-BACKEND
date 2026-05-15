@@ -1,7 +1,6 @@
 package com.auraia.backend.integration;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -137,7 +136,7 @@ class AuthIntegrationTest {
     }
 
     @Test
-    void repeatedRegisterForUnverifiedEmailResendsVerification() throws Exception {
+    void repeatedRegisterForExistingEmailShowsDuplicateEmailError() throws Exception {
         String email = "repeat-unverified@example.com";
         String password = "StrongPassword123!";
 
@@ -159,10 +158,9 @@ class AuthIntegrationTest {
                 .header("Accept-Language", "en")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload))
-            .andExpect(status().isAccepted())
-            .andExpect(jsonPath("$.message").value("Verification email sent."))
-            .andExpect(jsonPath("$.requiresVerification").value(true));
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.message").value("You cannot register with the same email address."));
 
-        verify(verificationEmailService, times(2)).sendVerificationEmail(any(User.class), any(String.class));
+        verify(verificationEmailService).sendVerificationEmail(any(User.class), any(String.class));
     }
 }
