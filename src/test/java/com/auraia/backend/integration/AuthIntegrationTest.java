@@ -1,6 +1,7 @@
 package com.auraia.backend.integration;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -133,5 +134,35 @@ class AuthIntegrationTest {
         mockMvc.perform(get("/api/v1/users/me")
                 .header("Authorization", "Bearer " + accessToken))
             .andExpect(status().isOk());
+    }
+
+    @Test
+    void repeatedRegisterForUnverifiedEmailResendsVerification() throws Exception {
+        String email = "repeat-unverified@example.com";
+        String password = "StrongPassword123!";
+
+        String payload = """
+            {
+              "name": "Repeat User",
+              "email": "%s",
+              "password": "%s"
+            }
+            """.formatted(email, password);
+
+        mockMvc.perform(post("/api/v1/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(payload))
+            .andExpect(status().isAccepted())
+            .andExpect(jsonPath("$.requiresVerification").value(true));
+
+        mockMvc.perform(post("/api/v1/auth/register")
+                .header("Accept-Language", "en")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(payload))
+            .andExpect(status().isAccepted())
+            .andExpect(jsonPath("$.message").value("Verification email sent."))
+            .andExpect(jsonPath("$.requiresVerification").value(true));
+
+        verify(verificationEmailService, times(2)).sendVerificationEmail(any(User.class), any(String.class));
     }
 }
