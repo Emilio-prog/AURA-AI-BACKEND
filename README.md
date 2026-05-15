@@ -1,14 +1,14 @@
 # AURA IA Backend
 
-Spring Boot backend for the AURA IA user panel. It owns authentication, PostgreSQL persistence, user data, billing, and the Gemini AI integration.
+Backend Spring Boot para el panel de usuario de AURA IA. Gestiona la autenticacion, la persistencia en PostgreSQL, los datos de usuario, la facturacion y la integracion con Gemini.
 
-## Requirements
+## Requisitos
 
 - JDK 21
-- Docker, only for Testcontainers integration tests
-- Supabase PostgreSQL connection string for dev/prod runtime
+- Docker, solo para tests de integracion con Testcontainers
+- Cadena de conexion a Supabase PostgreSQL para ejecucion en desarrollo/produccion
 
-This repository includes Maven Wrapper scripts. The wrapper downloads its own Maven runtime the first time it runs. The machine must expose JDK 21 through `JAVA_HOME` or `PATH`.
+Este repositorio incluye Maven Wrapper. El wrapper descarga su propia version de Maven la primera vez que se ejecuta. La maquina debe exponer JDK 21 mediante `JAVA_HOME` o `PATH`.
 
 ## Instalacion local limpia para evaluador
 
@@ -64,32 +64,32 @@ Verificacion rapida:
   backend real `https://api.aura-ia.es/api/v1/*` mediante el proxy de Vite.
 - En modo backend local, Swagger queda disponible en `http://localhost:8080/swagger-ui.html`.
 
-## Configuration
+## Configuracion
 
-Copy `.env.example` to `.env` in your local environment manager or export the variables before running. Never commit real credentials.
+Copia `.env.example` a `.env` en el gestor de entorno local o exporta las variables antes de ejecutar la aplicacion. No commitees nunca credenciales reales.
 
-Important variables:
+Variables importantes:
 
 - `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`
-- `JWT_SECRET` as a base64 secret of at least 64 bytes decoded
-- `FRONTEND_BASE_URL`, used for email verification links
+- `JWT_SECRET` como secreto base64 de al menos 64 bytes decodificados
+- `FRONTEND_BASE_URL`, usado para los enlaces de verificacion de email
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM`
-- `EMAIL_ENABLED=true` and `EMAIL_AUTO_VERIFY_WHEN_DISABLED=false` for real email verification
+- `EMAIL_ENABLED=true` y `EMAIL_AUTO_VERIFY_WHEN_DISABLED=false` para verificacion real por email
 - `AI_SERVICE_ENABLED`, `GEMINI_API_KEY`, `GEMINI_MODEL`, `AI_MAX_HISTORY_MESSAGES`
-- `ADMIN_EMAILS`, comma-separated emails promoted to admin
+- `ADMIN_EMAILS`, emails separados por comas que se promueven a administrador
 
-The Supabase project currently used for dev is `AURA-AI` (`aexcwfxhbiifvcxdgcxm`). Local development uses the Supabase Session pooler because the direct DB host is IPv6-only in this project:
+El proyecto Supabase usado actualmente para desarrollo es `AURA-AI` (`aexcwfxhbiifvcxdgcxm`). El desarrollo local usa el pooler de sesiones de Supabase porque el host directo de base de datos es solo IPv6 en este proyecto:
 
 ```text
 jdbc:postgresql://aws-1-eu-west-2.pooler.supabase.com:5432/postgres?sslmode=require
 username: postgres.aexcwfxhbiifvcxdgcxm
 ```
 
-The public backend schema was applied to Supabase through MCP as migration `init_aura_backend_schema`. Flyway profiles use `baseline-on-migrate=true` so an already-migrated Supabase schema is not recreated at runtime.
+El esquema publico del backend se aplico en Supabase mediante MCP como migracion `init_aura_backend_schema`. Los perfiles de Flyway usan `baseline-on-migrate=true`, por lo que un esquema de Supabase ya migrado no se recrea en tiempo de ejecucion.
 
 ### Resend SMTP
 
-The recommended email provider is Resend through Spring Mail SMTP. Resend requires a verified sending domain before external recipients can receive verification emails.
+El proveedor de email recomendado es Resend mediante Spring Mail SMTP. Resend requiere un dominio de envio verificado antes de que destinatarios externos puedan recibir emails de verificacion.
 
 ```text
 SMTP_HOST=smtp.resend.com
@@ -101,37 +101,37 @@ SMTP_STARTTLS=true
 SMTP_FROM=AURA IA <no-reply@aura-ia.es>
 ```
 
-Resend MCP is authenticated by API key. The configured sending domain is `aura-ia.es`; it must be `verified` in Resend before `EMAIL_ENABLED=true` is used in local or production runtime.
+Resend MCP esta autenticado mediante API key. El dominio de envio configurado es `aura-ia.es`; debe estar `verified` en Resend antes de usar `EMAIL_ENABLED=true` en local o en produccion.
 
-Verification emails are sent as HTML with a plain-text fallback. The HTML template includes the AURA IA brand block, a primary verification button, and a short security note.
+Los emails de verificacion se envian como HTML con alternativa de texto plano. La plantilla HTML incluye el bloque de marca AURA IA, un boton principal de verificacion y una breve nota de seguridad.
 
-## Run
+## Ejecucion
 
 ```bash
 ./mvnw spring-boot:run
 ```
 
-On Windows:
+En Windows:
 
 ```powershell
 .\mvnw.cmd spring-boot:run
 ```
 
-Swagger UI is available at:
+Swagger UI esta disponible en:
 
 ```text
 http://localhost:8080/swagger-ui.html
 ```
 
-Healthcheck:
+Comprobacion de salud:
 
 ```text
 GET /actuator/health
 ```
 
-### Full local dev stack
+### Stack local completo de desarrollo
 
-From the workspace root `AURA-IA`, the full development stack can be started with one command.
+Desde la raiz del workspace `AURA-IA`, el stack completo de desarrollo se puede arrancar con un solo comando.
 
 Windows:
 
@@ -146,16 +146,16 @@ chmod +x AURA-AI-FRONTEND/scripts/start-dev.sh
 ./AURA-AI-FRONTEND/scripts/start-dev.sh
 ```
 
-The scripts start the backend at `http://localhost:8080`, the frontend at `http://localhost:5173`, wait for both services, and open the browser at `http://localhost:5173`.
+Los scripts arrancan el backend en `http://localhost:8080`, el frontend en `http://localhost:5173`, esperan a que ambos servicios respondan y abren el navegador en `http://localhost:5173`.
 
-If `AURA-AI-BACKEND/.env` defines `SERVER_PORT`, the scripts use that real backend port and print a warning. Keep the frontend local env and OAuth callback aligned with it:
+Si `AURA-AI-BACKEND/.env` define `SERVER_PORT`, los scripts usan ese puerto real del backend y muestran un aviso. Mantener alineados el entorno local del frontend y el callback OAuth:
 
 ```text
 VITE_API_BASE_URL=http://localhost:<SERVER_PORT>/api/v1
 GOOGLE_OAUTH_REDIRECT_URI=http://localhost:<SERVER_PORT>/api/v1/auth/oauth/google/callback
 ```
 
-To stop the local stack:
+Para parar el stack local:
 
 ```powershell
 .\AURA-AI-FRONTEND\scripts\start-dev.ps1 -Stop
@@ -165,9 +165,9 @@ To stop the local stack:
 ./AURA-AI-FRONTEND/scripts/start-dev.sh stop
 ```
 
-To run against a real PostgreSQL/Supabase database, use the advanced `-RealEnv`
-mode on Windows or `real-env` on macOS/Linux. In that case
-`AURA-AI-BACKEND/.env` with credentials is required:
+Para ejecutar contra una base de datos real PostgreSQL/Supabase, usa el modo avanzado `-RealEnv`
+en Windows o `real-env` en macOS/Linux. En ese caso se requiere
+`AURA-AI-BACKEND/.env` con credenciales:
 
 ```powershell
 .\AURA-AI-FRONTEND\scripts\start-dev.ps1 -RealEnv
@@ -177,68 +177,68 @@ mode on Windows or `real-env` on macOS/Linux. In that case
 ./AURA-AI-FRONTEND/scripts/start-dev.sh real-env
 ```
 
-### Verification after the changes
+### Verificacion tras los cambios
 
-- Browser URL: `http://localhost:5173`.
-- Backend health: `GET http://localhost:8080/actuator/health` returns `{"status":"UP"}`. If `SERVER_PORT` is set in `.env`, use that port instead.
-- Frontend dev server: Vite logs `Local: http://localhost:5173/`.
-- API calls from the browser target `http://localhost:<SERVER_PORT>/api/v1`.
-- If API calls still target `127.0.0.1`, check `AURA-AI-FRONTEND/.env.local` and set `VITE_API_BASE_URL=http://localhost:<SERVER_PORT>/api/v1`.
-- On Windows, inspect `.dev-logs/backend-dev.err.log`, `.dev-logs/backend-dev.out.log`, `.dev-logs/frontend-dev.err.log`, and `.dev-logs/frontend-dev.out.log`.
-- On macOS/Linux, inspect `.dev-logs/backend-dev.log` and `.dev-logs/frontend-dev.log`.
-- If Google OAuth is enabled locally, `GOOGLE_OAUTH_REDIRECT_URI` must match the backend URL, for example `http://localhost:8080/api/v1/auth/oauth/google/callback`.
+- URL del navegador: `http://localhost:5173`.
+- Health del backend: `GET http://localhost:8080/actuator/health` devuelve `{"status":"UP"}`. Si `SERVER_PORT` esta definido en `.env`, usa ese puerto.
+- Servidor de desarrollo frontend: Vite muestra `Local: http://localhost:5173/`.
+- Las llamadas API del navegador apuntan a `http://localhost:<SERVER_PORT>/api/v1`.
+- Si las llamadas API siguen apuntando a `127.0.0.1`, revisar `AURA-AI-FRONTEND/.env.local` y configurar `VITE_API_BASE_URL=http://localhost:<SERVER_PORT>/api/v1`.
+- En Windows, revisar `.dev-logs/backend-dev.err.log`, `.dev-logs/backend-dev.out.log`, `.dev-logs/frontend-dev.err.log` y `.dev-logs/frontend-dev.out.log`.
+- En macOS/Linux, revisar `.dev-logs/backend-dev.log` y `.dev-logs/frontend-dev.log`.
+- Si Google OAuth esta habilitado localmente, `GOOGLE_OAUTH_REDIRECT_URI` debe coincidir con la URL del backend, por ejemplo `http://localhost:8080/api/v1/auth/oauth/google/callback`.
 
-## Version Control
+## Control de versiones
 
-Backend changes follow GitFlow: work starts in `feature`, integrates into `develop`,
-is stabilized in `release`, and reaches `main` only through a tagged release.
-Critical production fixes use `hotfix` and are merged back into `develop`.
+Los cambios del backend siguen GitFlow: el trabajo empieza en `feature`, se integra en `develop`,
+se estabiliza en `release` y llega a `main` solo mediante un release etiquetado.
+Las correcciones criticas de produccion usan `hotfix` y se devuelven a `develop`.
 
-### Stripe Billing Webhooks
+### Webhooks de facturacion Stripe
 
-Checkout can open from local development, but Stripe cannot call `localhost` directly after payment. To make plan changes sync locally on Windows, start the full dev stack from the workspace root `AURA-IA` with:
+Checkout puede abrirse desde desarrollo local, pero Stripe no puede llamar directamente a `localhost` despues del pago. Para sincronizar cambios de plan localmente en Windows, arranca el stack completo desde la raiz del workspace `AURA-IA` con:
 
 ```powershell
 .\AURA-AI-FRONTEND\scripts\start-dev.ps1 -StripeWebhook
 ```
 
-That command reads `STRIPE_SECRET_KEY`, obtains the local Stripe CLI webhook signing secret, injects it into the backend process as `STRIPE_WEBHOOK_SECRET`, and forwards Stripe events to:
+Ese comando lee `STRIPE_SECRET_KEY`, obtiene el secreto local de firma de webhook de Stripe CLI, lo inyecta en el proceso del backend como `STRIPE_WEBHOOK_SECRET` y reenvia eventos de Stripe a:
 
 ```text
 http://localhost:8080/api/v1/webhooks/stripe
 ```
 
-If Stripe CLI is not installed, the script falls back to Docker Desktop and runs the official `stripe/stripe-cli` image. Stop everything with:
+Si Stripe CLI no esta instalado, el script usa Docker Desktop como alternativa y ejecuta la imagen oficial `stripe/stripe-cli`. Para parar todo:
 
 ```powershell
 .\AURA-AI-FRONTEND\scripts\start-dev.ps1 -Stop
 ```
 
-Production must use a real public backend URL, currently expected as:
+Produccion debe usar una URL publica real del backend, actualmente esperada como:
 
 ```text
 https://api.aura-ia.es/api/v1/webhooks/stripe
 ```
 
-Use the Dashboard webhook signing secret for production/Dokploy, and the local listener secret only for local runs.
+Usa el secreto de firma de webhook del Dashboard para produccion/Dokploy, y el secreto local del listener solo para ejecuciones locales.
 
-Production deployment details are tracked in [`docs/stripe-production.md`](docs/stripe-production.md).
+Los detalles del despliegue en produccion estan documentados en [`docs/stripe-production.md`](docs/stripe-production.md).
 
-## Auth Flow
+## Flujo de autenticacion
 
-1. `POST /api/v1/auth/register` creates the user and returns `202 Accepted`.
-2. In prod, a verification email is sent to `${FRONTEND_BASE_URL}/#/verify-email?token=...` for the current HashRouter frontend.
-3. In dev, if `EMAIL_ENABLED=false` and `EMAIL_AUTO_VERIFY_WHEN_DISABLED=true`, the account is verified immediately.
-4. `POST /api/v1/auth/verify-email?token=...` verifies the account when email verification is active.
-5. `POST /api/v1/auth/login` returns `accessToken` and `refreshToken`.
-6. `POST /api/v1/auth/refresh` rotates the refresh token.
-7. `POST /api/v1/auth/logout` revokes the current refresh token.
+1. `POST /api/v1/auth/register` crea el usuario y devuelve `202 Accepted`.
+2. En produccion, se envia un email de verificacion a `${FRONTEND_BASE_URL}/#/verify-email?token=...` para el frontend actual con HashRouter.
+3. En desarrollo, si `EMAIL_ENABLED=false` y `EMAIL_AUTO_VERIFY_WHEN_DISABLED=true`, la cuenta se verifica inmediatamente.
+4. `POST /api/v1/auth/verify-email?token=...` verifica la cuenta cuando la verificacion por email esta activa.
+5. `POST /api/v1/auth/login` devuelve `accessToken` y `refreshToken`.
+6. `POST /api/v1/auth/refresh` rota el refresh token.
+7. `POST /api/v1/auth/logout` revoca el refresh token actual.
 
-Users cannot log in until email is verified. Passwords require 12 characters with uppercase, lowercase, number, and symbol.
+Los usuarios no pueden iniciar sesion hasta que el email este verificado. Las contrasenas requieren 12 caracteres con mayuscula, minuscula, numero y simbolo.
 
-## AI Service Contract
+## Contrato del servicio de IA
 
-The backend integrates Gemini directly from Spring Boot through `RestClient`; there is no Python/FastAPI service in the current architecture. Runtime behavior is controlled by:
+El backend integra Gemini directamente desde Spring Boot mediante `RestClient`; no hay servicio Python/FastAPI en la arquitectura actual. El comportamiento en tiempo de ejecucion se controla mediante:
 
 ```text
 AI_SERVICE_ENABLED=true
@@ -249,9 +249,9 @@ AI_CHAT_RATE_LIMIT_CAPACITY=20
 AI_CHAT_RATE_LIMIT_REFILL_MINUTES=5
 ```
 
-When `AI_SERVICE_ENABLED=false`, `GEMINI_API_KEY` is missing, Gemini is unavailable, or Gemini returns an invalid response, the backend returns a deterministic safe fallback instead of breaking the chat.
+Cuando `AI_SERVICE_ENABLED=false`, falta `GEMINI_API_KEY`, Gemini no esta disponible o Gemini devuelve una respuesta invalida, el backend devuelve un fallback seguro y determinista en lugar de romper el chat.
 
-Authenticated chat endpoints:
+Endpoints autenticados del chat:
 
 ```http
 GET /api/v1/chatbot/sessions
@@ -261,13 +261,13 @@ POST /api/v1/chatbot/sessions/{id}/messages
 DELETE /api/v1/chatbot/sessions/{id}
 ```
 
-Message request:
+Peticion de mensaje:
 
 ```json
 { "message": "Estoy nervioso hoy" }
 ```
 
-Session response:
+Respuesta de sesion:
 
 ```json
 {
@@ -293,27 +293,27 @@ Session response:
 }
 ```
 
-Only the current message and the most recent messages from the same chat session are sent to Gemini. Diary entries, mood logs, onboarding data, contacts, billing data, and user profile details are not sent to Gemini.
+Solo se envian a Gemini el mensaje actual y los mensajes mas recientes de la misma sesion de chat. No se envian a Gemini entradas de diario, registros de mood, datos de onboarding, contactos, datos de facturacion ni detalles del perfil de usuario.
 
-Safety rules are enforced before and after Gemini. Messages involving suicidal ideation, self-harm, harm to others, or immediate danger return a high-risk safety response that references Spain `112` and `024`. Normal anxiety, panic, sleep, or calming requests receive grounding and breathing support without emergency numbers.
+Las reglas de seguridad se aplican antes y despues de Gemini. Los mensajes que impliquen ideacion suicida, autolesion, dano a otras personas o peligro inmediato devuelven una respuesta de seguridad de alto riesgo que menciona en Espana el `112` y el `024`. Las solicitudes normales sobre ansiedad, panico, sueno o calma reciben apoyo de grounding y respiracion sin numeros de emergencia.
 
-## Tests
+## Pruebas
 
 ```bash
 ./mvnw test
 ```
 
-Integration tests use Testcontainers PostgreSQL and are opt-in so regular builds do not fail on machines where Docker Desktop is not running:
+Los tests de integracion usan Testcontainers PostgreSQL y son opt-in para que las builds normales no fallen en maquinas donde Docker Desktop no este ejecutandose:
 
 ```bash
 ./mvnw test -Daura.integration-tests=true
 ```
 
-## Frontend Contract Notes
+## Notas de contrato con el frontend
 
-The backend exposes the secure contract consumed by the current frontend:
+El backend expone el contrato seguro consumido por el frontend actual:
 
-- Register returns pending verification, not tokens.
-- Demo password must be strong if seeded from backend.
-- Mood uses `beforeLevel` and `afterLevel` from 1 to 10.
-- API JSON field names are stable English; messages are localized through `Accept-Language`.
+- El registro devuelve verificacion pendiente, no tokens.
+- La contrasena demo debe ser fuerte si se inicializa desde backend.
+- Mood usa `beforeLevel` y `afterLevel` de 1 a 10.
+- Los nombres de campos JSON de la API son estables en ingles; los mensajes se localizan mediante `Accept-Language`.
