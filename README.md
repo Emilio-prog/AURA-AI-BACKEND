@@ -75,6 +75,52 @@ Healthcheck:
 GET /actuator/health
 ```
 
+### Full local dev stack
+
+From the workspace root `AURA-IA`, the full development stack can be started with one command.
+
+Windows:
+
+```powershell
+.\AURA-AI-FRONTEND\scripts\start-dev.ps1
+```
+
+macOS/Linux:
+
+```bash
+chmod +x AURA-AI-FRONTEND/scripts/start-dev.sh
+./AURA-AI-FRONTEND/scripts/start-dev.sh
+```
+
+The scripts start the backend at `http://localhost:8080`, the frontend at `http://localhost:5173`, wait for both services, and open the browser at `http://localhost:5173`.
+
+If `AURA-AI-BACKEND/.env` defines `SERVER_PORT`, the scripts use that real backend port and print a warning. Keep the frontend local env and OAuth callback aligned with it:
+
+```text
+VITE_API_BASE_URL=http://localhost:<SERVER_PORT>/api/v1
+GOOGLE_OAUTH_REDIRECT_URI=http://localhost:<SERVER_PORT>/api/v1/auth/oauth/google/callback
+```
+
+To stop the local stack:
+
+```powershell
+.\AURA-AI-FRONTEND\scripts\start-dev.ps1 -Stop
+```
+
+```bash
+./AURA-AI-FRONTEND/scripts/start-dev.sh stop
+```
+
+### Verification after the changes
+
+- Browser URL: `http://localhost:5173`.
+- Backend health: `GET http://localhost:8080/actuator/health` returns `{"status":"UP"}`. If `SERVER_PORT` is set in `.env`, use that port instead.
+- Frontend dev server: Vite logs `Local: http://localhost:5173/`.
+- API calls from the browser target `http://localhost:<SERVER_PORT>/api/v1`.
+- If API calls still target `127.0.0.1`, check `AURA-AI-FRONTEND/.env.local` and set `VITE_API_BASE_URL=http://localhost:<SERVER_PORT>/api/v1`.
+- On Windows, inspect the backend/frontend terminal windows. On macOS/Linux, inspect `.dev-logs/backend-dev.log` and `.dev-logs/frontend-dev.log`.
+- If Google OAuth is enabled locally, `GOOGLE_OAUTH_REDIRECT_URI` must match the backend URL, for example `http://localhost:8080/api/v1/auth/oauth/google/callback`.
+
 ## Version Control
 
 Backend changes follow GitFlow: work starts in `feature`, integrates into `develop`,
@@ -83,10 +129,10 @@ Critical production fixes use `hotfix` and are merged back into `develop`.
 
 ### Stripe Billing Webhooks
 
-Checkout can open from local development, but Stripe cannot call `localhost` directly after payment. To make plan changes sync locally, start the full dev stack from the repository root with:
+Checkout can open from local development, but Stripe cannot call `localhost` directly after payment. To make plan changes sync locally on Windows, start the full dev stack from the workspace root `AURA-IA` with:
 
 ```powershell
-.\start-dev.ps1 -StripeWebhook
+.\AURA-AI-FRONTEND\scripts\start-dev.ps1 -StripeWebhook
 ```
 
 That command reads `STRIPE_SECRET_KEY`, obtains the local Stripe CLI webhook signing secret, injects it into the backend process as `STRIPE_WEBHOOK_SECRET`, and forwards Stripe events to:
@@ -98,7 +144,7 @@ http://localhost:8080/api/v1/webhooks/stripe
 If Stripe CLI is not installed, the script falls back to Docker Desktop and runs the official `stripe/stripe-cli` image. Stop everything with:
 
 ```powershell
-.\start-dev.ps1 -Stop
+.\AURA-AI-FRONTEND\scripts\start-dev.ps1 -Stop
 ```
 
 Production must use a real public backend URL, currently expected as:
