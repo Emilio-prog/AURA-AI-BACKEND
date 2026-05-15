@@ -310,9 +310,9 @@ Integration tests use Testcontainers PostgreSQL and are opt-in so regular builds
 
 ## Frontend Contract Notes
 
-The backend intentionally uses the secure contract rather than the old localStorage mock contract. The frontend should update:
+The backend exposes the secure contract consumed by the current frontend:
 
-- Register now returns pending verification, not tokens.
+- Register returns pending verification, not tokens.
 - Demo password must be strong if seeded from backend.
 - Mood uses `beforeLevel` and `afterLevel` from 1 to 10.
 - API JSON field names are stable English; messages are localized through `Accept-Language`.
