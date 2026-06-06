@@ -73,7 +73,7 @@ public class WebPushServiceImpl implements WebPushService {
     public PushResponses.PushSubscriptionResponse subscribe(PushRequests.SubscriptionRequest request) {
         ensureEnabled();
         User user = currentUser();
-        String endpoint = request.endpoint().trim();
+        String endpoint = request.getEndpoint().trim();
         String hash = endpointHash(endpoint);
         WebPushSubscription subscription = subscriptionRepository.findByUserAndEndpointHash(user, hash)
             .orElseGet(() -> WebPushSubscription.builder()
@@ -81,9 +81,9 @@ public class WebPushServiceImpl implements WebPushService {
                 .endpointHash(hash)
                 .build());
         subscription.setEndpoint(cryptoService.encrypt(user.getId(), "push.endpoint", endpoint));
-        subscription.setP256dh(cryptoService.encrypt(user.getId(), "push.p256dh", request.keys().p256dh().trim()));
-        subscription.setAuthSecret(cryptoService.encrypt(user.getId(), "push.auth", request.keys().auth().trim()));
-        subscription.setExpirationTime(request.expirationTime());
+        subscription.setP256dh(cryptoService.encrypt(user.getId(), "push.p256dh", request.getKeys().getP256dh().trim()));
+        subscription.setAuthSecret(cryptoService.encrypt(user.getId(), "push.auth", request.getKeys().getAuth().trim()));
+        subscription.setExpirationTime(request.getExpirationTime());
         subscription.setActive(true);
         subscription.setRevokedAt(null);
         subscription.setFailureReason(null);
@@ -96,8 +96,8 @@ public class WebPushServiceImpl implements WebPushService {
     public PushResponses.PushSubscriptionResponse disable(PushRequests.DisableSubscriptionRequest request) {
         User user = currentUser();
         List<WebPushSubscription> subscriptions = activeSubscriptions(user);
-        if (request.endpoint() != null && !request.endpoint().isBlank()) {
-            String hash = endpointHash(request.endpoint().trim());
+        if (request.getEndpoint() != null && !request.getEndpoint().isBlank()) {
+            String hash = endpointHash(request.getEndpoint().trim());
             subscriptions = subscriptions.stream()
                 .filter(subscription -> subscription.getEndpointHash().equals(hash))
                 .toList();
@@ -168,7 +168,7 @@ public class WebPushServiceImpl implements WebPushService {
             return;
         }
         DayWindow day = dayWindow(now, zone);
-        if (moodLogRepository.existsByUserAndLoggedAtBetween(user, day.start(), day.end())) {
+        if (moodLogRepository.existsByUserAndLoggedAtBetween(user, day.getStart(), day.getEnd())) {
             return;
         }
         WebPushPayload payload = new WebPushPayload(
@@ -177,7 +177,7 @@ public class WebPushServiceImpl implements WebPushService {
             "Tienes un recordatorio pendiente.",
             "/#/dashboard/mood"
         );
-        sendToActiveSubscriptions(user, WebPushNotificationType.MOOD_REMINDER, "mood:" + day.date(), payload);
+        sendToActiveSubscriptions(user, WebPushNotificationType.MOOD_REMINDER, "mood:" + day.getDate(), payload);
     }
 
     private void sendDiaryReminderIfDue(User user, ZoneId zone, Instant now) {
@@ -186,7 +186,7 @@ public class WebPushServiceImpl implements WebPushService {
             return;
         }
         DayWindow day = dayWindow(now, zone);
-        if (diaryEntryRepository.existsByUserAndCreatedAtBetween(user, day.start(), day.end())) {
+        if (diaryEntryRepository.existsByUserAndCreatedAtBetween(user, day.getStart(), day.getEnd())) {
             return;
         }
         WebPushPayload payload = new WebPushPayload(
@@ -195,7 +195,7 @@ public class WebPushServiceImpl implements WebPushService {
             "Tu espacio de diario sigue disponible hoy.",
             "/#/dashboard/diario"
         );
-        sendToActiveSubscriptions(user, WebPushNotificationType.DIARY_REMINDER, "diary:" + day.date(), payload);
+        sendToActiveSubscriptions(user, WebPushNotificationType.DIARY_REMINDER, "diary:" + day.getDate(), payload);
     }
 
     private void sendAchievementNotifications(User user) {
@@ -254,7 +254,7 @@ public class WebPushServiceImpl implements WebPushService {
         Instant sentAt = Instant.now();
         saveDelivery(user, subscription, type, targetKey, payload, result, sentAt);
         updateSubscription(subscription, result, sentAt);
-        return result.success();
+        return result.isSuccess();
     }
 
     private void saveDelivery(User user,
@@ -264,7 +264,7 @@ public class WebPushServiceImpl implements WebPushService {
                               WebPushPayload payload,
                               WebPushSendResult result,
                               Instant sentAt) {
-        WebPushDeliveryStatus status = result.success()
+        WebPushDeliveryStatus status = result.isSuccess()
             ? WebPushDeliveryStatus.SENT
             : result.subscriptionRevoked() ? WebPushDeliveryStatus.SUBSCRIPTION_REVOKED : WebPushDeliveryStatus.FAILED;
         deliveryRepository.save(WebPushDelivery.builder()
@@ -274,20 +274,20 @@ public class WebPushServiceImpl implements WebPushService {
             .targetKey(targetKey)
             .payloadJson(payload.toMap())
             .status(status)
-            .providerStatus(result.statusCode() == 0 ? null : result.statusCode())
-            .errorMessage(result.errorMessage())
-            .sentAt(result.success() ? sentAt : null)
+            .providerStatus(result.getStatusCode() == 0 ? null : result.getStatusCode())
+            .errorMessage(result.getErrorMessage())
+            .sentAt(result.isSuccess() ? sentAt : null)
             .build());
     }
 
     private void updateSubscription(WebPushSubscription subscription, WebPushSendResult result, Instant now) {
-        if (result.success()) {
+        if (result.isSuccess()) {
             subscription.setLastSuccessAt(now);
             subscription.setLastFailureAt(null);
             subscription.setFailureReason(null);
         } else {
             subscription.setLastFailureAt(now);
-            subscription.setFailureReason(result.errorMessage());
+            subscription.setFailureReason(result.getErrorMessage());
             if (result.subscriptionRevoked()) {
                 subscription.setActive(false);
                 subscription.setRevokedAt(now);
@@ -384,6 +384,42 @@ public class WebPushServiceImpl implements WebPushService {
         }
     }
 
-    private record DayWindow(LocalDate date, Instant start, Instant end) {
+    private static class DayWindow {
+        private LocalDate date;
+        private Instant start;
+        private Instant end;
+
+        private DayWindow() {
+        }
+
+        private DayWindow(LocalDate date, Instant start, Instant end) {
+            this.date = date;
+            this.start = start;
+            this.end = end;
+        }
+
+        private LocalDate getDate() {
+            return date;
+        }
+
+        private void setDate(LocalDate date) {
+            this.date = date;
+        }
+
+        private Instant getStart() {
+            return start;
+        }
+
+        private void setStart(Instant start) {
+            this.start = start;
+        }
+
+        private Instant getEnd() {
+            return end;
+        }
+
+        private void setEnd(Instant end) {
+            this.end = end;
+        }
     }
 }

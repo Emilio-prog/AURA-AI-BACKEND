@@ -80,11 +80,11 @@ public class UserServiceImpl implements UserService {
     public UserResponses.UserResponse updateCurrentProfile(UserRequests.UpdateUserRequest request) {
         User user = currentUser();
         boolean emailChanged = false;
-        if (request.name() != null && !request.name().isBlank()) {
-            user.setName(request.name().trim());
+        if (request.getName() != null && !request.getName().isBlank()) {
+            user.setName(request.getName().trim());
         }
-        if (request.email() != null && !request.email().isBlank()) {
-            String email = request.email().trim().toLowerCase(Locale.ROOT);
+        if (request.getEmail() != null && !request.getEmail().isBlank()) {
+            String email = request.getEmail().trim().toLowerCase(Locale.ROOT);
             if (!email.equals(user.getEmail()) && userRepository.existsByEmailIgnoreCase(email)) {
                 throw new BusinessException("error.email_in_use");
             }
@@ -111,18 +111,18 @@ public class UserServiceImpl implements UserService {
 
         validateOnboarding(request);
 
-        String language = request.language().trim().toLowerCase(Locale.ROOT);
-        String timezone = request.timezone().trim();
+        String language = request.getLanguage().trim().toLowerCase(Locale.ROOT);
+        String timezone = request.getTimezone().trim();
         Instant now = Instant.now();
 
-        user.setName(request.preferredName().trim());
+        user.setName(request.getPreferredName().trim());
         user.setOnboardedAt(now);
         user.setOnboardingConsentAt(now);
         user.setOnboardingConsentVersion(ONBOARDING_CONSENT_VERSION);
         user.setOnboardingProfile(contentCryptoService.encryptJsonMap(user.getId(), "user.onboarding-profile", onboardingProfile(request)));
 
-        updateSettings(user, language, timezone, request.notifications());
-        createTrustedContactIfPresent(user, request.trustedContact());
+        updateSettings(user, language, timezone, request.getNotifications());
+        createTrustedContactIfPresent(user, request.getTrustedContact());
 
         return userMapper.toResponse(userRepository.save(user));
     }
@@ -131,11 +131,11 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public AuthResponses.MessageResponse changePassword(UserRequests.ChangePasswordRequest request) {
         User user = currentUser();
-        if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPasswordHash())) {
             throw new BusinessException("error.current_password");
         }
-        passwordPolicyValidator.validate(request.newPassword());
-        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        passwordPolicyValidator.validate(request.getNewPassword());
+        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
         return new AuthResponses.MessageResponse("OK");
     }
@@ -181,7 +181,7 @@ public class UserServiceImpl implements UserService {
     }
 
     private void validateAccountDeletion(UserRequests.DeleteAccountRequest request) {
-        if (request == null || !"ELIMINAR MI CUENTA".equals(request.confirmationText())) {
+        if (request == null || !"ELIMINAR MI CUENTA".equals(request.getConfirmationText())) {
             throw new BusinessException("error.account_delete_confirmation_required");
         }
     }
@@ -251,25 +251,25 @@ public class UserServiceImpl implements UserService {
     }
 
     private void validateOnboarding(UserRequests.CompleteOnboardingRequest request) {
-        if (!Boolean.TRUE.equals(request.privacyAccepted())
-            || !Boolean.TRUE.equals(request.termsAccepted())
-            || !Boolean.TRUE.equals(request.supportOnlyAccepted())
-            || !Boolean.TRUE.equals(request.ageConfirmed())) {
+        if (!Boolean.TRUE.equals(request.getPrivacyAccepted())
+            || !Boolean.TRUE.equals(request.getTermsAccepted())
+            || !Boolean.TRUE.equals(request.getSupportOnlyAccepted())
+            || !Boolean.TRUE.equals(request.getAgeConfirmed())) {
             throw new BusinessException("error.onboarding_consent_required");
         }
-        if (!"es".equals(request.language().trim().toLowerCase(Locale.ROOT))) {
+        if (!"es".equals(request.getLanguage().trim().toLowerCase(Locale.ROOT))) {
             throw new BusinessException("error.unsupported_language");
         }
-        validateTrustedContact(request.trustedContact());
+        validateTrustedContact(request.getTrustedContact());
     }
 
     private void validateTrustedContact(UserRequests.TrustedContactRequest contact) {
         if (contact == null) {
             return;
         }
-        boolean hasName = hasText(contact.name());
-        boolean hasPhone = hasText(contact.phone());
-        boolean hasRelationship = hasText(contact.relationship());
+        boolean hasName = hasText(contact.getName());
+        boolean hasPhone = hasText(contact.getPhone());
+        boolean hasRelationship = hasText(contact.getRelationship());
         if ((hasName || hasPhone || hasRelationship) && (!hasName || !hasPhone)) {
             throw new BusinessException("error.onboarding_contact_partial");
         }
@@ -277,11 +277,11 @@ public class UserServiceImpl implements UserService {
 
     private Map<String, Object> onboardingProfile(UserRequests.CompleteOnboardingRequest request) {
         Map<String, Object> profile = new LinkedHashMap<>();
-        profile.put("goals", cleanList(request.goals()));
-        profile.put("anxietyTriggers", cleanList(request.anxietyTriggers()));
-        profile.put("currentMood", currentMood(request.currentMood()));
-        profile.put("toolPreferences", cleanList(request.toolPreferences()));
-        profile.put("notifications", request.notifications() == null ? Map.of() : request.notifications());
+        profile.put("goals", cleanList(request.getGoals()));
+        profile.put("anxietyTriggers", cleanList(request.getAnxietyTriggers()));
+        profile.put("currentMood", currentMood(request.getCurrentMood()));
+        profile.put("toolPreferences", cleanList(request.getToolPreferences()));
+        profile.put("notifications", request.getNotifications() == null ? Map.of() : request.getNotifications());
         return profile;
     }
 
@@ -300,8 +300,8 @@ public class UserServiceImpl implements UserService {
             return Map.of();
         }
         return Map.of(
-            "label", mood.label().trim(),
-            "intensity", mood.intensity()
+            "label", mood.getLabel().trim(),
+            "intensity", mood.getIntensity()
         );
     }
 
@@ -321,14 +321,14 @@ public class UserServiceImpl implements UserService {
     }
 
     private void createTrustedContactIfPresent(User user, UserRequests.TrustedContactRequest contact) {
-        if (contact == null || !hasText(contact.name()) && !hasText(contact.phone()) && !hasText(contact.relationship())) {
+        if (contact == null || !hasText(contact.getName()) && !hasText(contact.getPhone()) && !hasText(contact.getRelationship())) {
             return;
         }
         contactRepository.save(Contact.builder()
             .user(user)
-            .name(contentCryptoService.encrypt(user.getId(), "contact.name", contact.name().trim()))
-            .phone(contentCryptoService.encrypt(user.getId(), "contact.phone", contact.phone().trim()))
-            .relationship(contentCryptoService.encrypt(user.getId(), "contact.relationship", blankToNull(contact.relationship())))
+            .name(contentCryptoService.encrypt(user.getId(), "contact.name", contact.getName().trim()))
+            .phone(contentCryptoService.encrypt(user.getId(), "contact.phone", contact.getPhone().trim()))
+            .relationship(contentCryptoService.encrypt(user.getId(), "contact.relationship", blankToNull(contact.getRelationship())))
             .priority(1)
             .available(true)
             .sosEnabled(true)

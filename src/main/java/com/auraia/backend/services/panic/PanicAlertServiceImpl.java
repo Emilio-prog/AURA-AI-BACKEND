@@ -43,8 +43,8 @@ public class PanicAlertServiceImpl implements PanicAlertService {
     @Transactional
     public DomainResponses.PanicAlertResponse trigger(DomainRequests.PanicTriggerRequest request) {
         User user = currentUser();
-        String notes = blankToNull(request.notes());
-        Map<String, Object> contextJson = request.contextJson() == null ? new LinkedHashMap<>() : request.contextJson();
+        String notes = blankToNull(request.getNotes());
+        Map<String, Object> contextJson = request.getContextJson() == null ? new LinkedHashMap<>() : request.getContextJson();
         PanicAlert alert = PanicAlert.builder()
             .user(user)
             .triggeredAt(Instant.now())
@@ -52,8 +52,8 @@ public class PanicAlertServiceImpl implements PanicAlertService {
             .contextJson(contentCryptoService.encryptJsonMap(user.getId(), "panic.context", contextJson))
             .build();
         PanicAlert saved = panicAlertRepository.save(alert);
-        if (request.contactId() != null) {
-            Contact contact = contactRepository.findByIdAndUser(request.contactId(), user)
+        if (request.getContactId() != null) {
+            Contact contact = contactRepository.findByIdAndUser(request.getContactId(), user)
                 .orElseThrow(() -> new ResourceNotFoundException("Contact not found"));
             if (!contact.isAvailable() || !contact.isSosEnabled()) {
                 throw new BusinessException("error.sos_contact_unavailable");
@@ -89,8 +89,8 @@ public class PanicAlertServiceImpl implements PanicAlertService {
         PanicAlert alert = panicAlertRepository.findByIdAndUser(id, user)
             .orElseThrow(() -> new ResourceNotFoundException("Panic alert not found"));
         alert.setResolvedAt(Instant.now());
-        if (request.notes() != null && !request.notes().isBlank()) {
-            alert.setNotes(contentCryptoService.encrypt(user.getId(), "panic.notes", request.notes().trim()));
+        if (request.getNotes() != null && !request.getNotes().isBlank()) {
+            alert.setNotes(contentCryptoService.encrypt(user.getId(), "panic.notes", request.getNotes().trim()));
         }
         return toResponse(panicAlertRepository.save(alert), user);
     }
@@ -154,16 +154,16 @@ public class PanicAlertServiceImpl implements PanicAlertService {
         String contactPhone = contentCryptoService.decrypt(user.getId(), "contact.phone", contact.getPhone());
         String contactName = contentCryptoService.decrypt(user.getId(), "contact.name", contact.getName());
         SosSmsResult result = sosSmsSender.send(contactPhone, sosMessage(user));
-        String details = switch (result.status()) {
-            case SENT -> "SMS sent to " + contactName + " (" + result.providerMessageId() + ")";
+        String details = switch (result.getStatus()) {
+            case SENT -> "SMS sent to " + contactName + " (" + result.getProviderMessageId() + ")";
             case MOCKED -> "SMS simulated for " + contactName;
-            case FAILED -> "SMS failed for " + contactName + ": " + result.details();
+            case FAILED -> "SMS failed for " + contactName + ": " + result.getDetails();
         };
         notificationResultRepository.save(PanicNotificationResult.builder()
             .alert(alert)
             .contact(contact)
             .channel("SMS")
-            .status(result.status())
+            .status(result.getStatus())
             .details(contentCryptoService.encrypt(user.getId(), "panic.notification-details", details))
             .build());
     }

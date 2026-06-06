@@ -118,17 +118,17 @@ public class AiAnalyzerClient {
     }
 
     private AiChatResponse applySafetyGuard(AiChatResponse response, String message) {
-        boolean highRisk = "high".equalsIgnoreCase(response.riskLevel())
+        boolean highRisk = "high".equalsIgnoreCase(response.getRiskLevel())
             || containsEmergencyRisk(normalize(message))
-            || containsEmergencyRisk(normalize(response.reply()));
+            || containsEmergencyRisk(normalize(response.getReply()));
         if (!highRisk) {
             return response;
         }
-        String reply = response.reply();
+        String reply = response.getReply();
         if (!reply.contains("112") || !reply.contains("024")) {
             reply = CRISIS_NOTICE + "\n\n" + reply;
         }
-        return new AiChatResponse(reply, "crisis", "high", response.emotions());
+        return new AiChatResponse(reply, "crisis", "high", response.getEmotions());
     }
 
     private String normalizeRisk(String value) {

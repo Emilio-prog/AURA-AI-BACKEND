@@ -56,22 +56,22 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public AuthResponses.PendingVerificationResponse register(AuthRequests.RegisterRequest request) {
-        if (!turnstileService.verify(request.captchaToken(), null)) {
+        if (!turnstileService.verify(request.getCaptchaToken(), null)) {
             throw new BusinessException("error.captcha_invalid");
         }
-        String email = normalizeEmail(request.email());
+        String email = normalizeEmail(request.getEmail());
         var existingUser = userRepository.findByEmailIgnoreCase(email);
         if (existingUser.isPresent()) {
             throw new BusinessException("error.email_in_use");
         }
-        passwordPolicyValidator.validate(request.password());
+        passwordPolicyValidator.validate(request.getPassword());
 
         boolean admin = isConfiguredAdmin(email);
         boolean emailVerified = admin || shouldAutoVerifyEmail();
         User user = User.builder()
             .email(email)
-            .passwordHash(passwordEncoder.encode(request.password()))
-            .name(request.name().trim())
+            .passwordHash(passwordEncoder.encode(request.getPassword()))
+            .name(request.getName().trim())
             .role(admin ? Role.ADMIN : Role.USER)
             .plan(Plan.FREE)
             .emailVerified(emailVerified)
@@ -90,9 +90,9 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public AuthResponses.AuthResponse login(AuthRequests.LoginRequest request) {
-        User user = userRepository.findByEmailIgnoreCaseAndDeletedAtIsNull(normalizeEmail(request.email()))
+        User user = userRepository.findByEmailIgnoreCaseAndDeletedAtIsNull(normalizeEmail(request.getEmail()))
             .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
-        if (user.getPasswordHash() == null || !passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+        if (user.getPasswordHash() == null || !passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             throw new BadCredentialsException("Invalid credentials");
         }
         if (!user.isEmailVerified()) {
@@ -104,7 +104,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public AuthResponses.AuthResponse refresh(AuthRequests.RefreshTokenRequest request) {
-        String hash = TokenHashing.sha256(request.refreshToken());
+        String hash = TokenHashing.sha256(request.getRefreshToken());
         RefreshToken refreshToken = refreshTokenRepository.findByTokenHash(hash)
             .orElseThrow(() -> new BusinessException("error.invalid_token"));
         Instant now = Instant.now();
@@ -119,7 +119,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public AuthResponses.MessageResponse logout(AuthRequests.LogoutRequest request) {
-        String hash = TokenHashing.sha256(request.refreshToken());
+        String hash = TokenHashing.sha256(request.getRefreshToken());
         refreshTokenRepository.findByTokenHash(hash).ifPresent(token -> {
             token.setRevokedAt(Instant.now());
             refreshTokenRepository.save(token);
@@ -147,7 +147,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public AuthResponses.MessageResponse resendVerification(AuthRequests.ResendVerificationRequest request) {
-        userRepository.findByEmailIgnoreCaseAndDeletedAtIsNull(normalizeEmail(request.email()))
+        userRepository.findByEmailIgnoreCaseAndDeletedAtIsNull(normalizeEmail(request.getEmail()))
             .filter(user -> !user.isEmailVerified())
             .ifPresent(this::createAndSendVerificationToken);
         return new AuthResponses.MessageResponse(message("auth.email.sent"));
@@ -156,10 +156,10 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public AuthResponses.MessageResponse forgotPassword(AuthRequests.ForgotPasswordRequest request) {
-        if (!turnstileService.verify(request.captchaToken(), null)) {
+        if (!turnstileService.verify(request.getCaptchaToken(), null)) {
             throw new BusinessException("error.captcha_invalid");
         }
-        userRepository.findByEmailIgnoreCaseAndDeletedAtIsNull(normalizeEmail(request.email()))
+        userRepository.findByEmailIgnoreCaseAndDeletedAtIsNull(normalizeEmail(request.getEmail()))
             .ifPresent(this::createAndSendPasswordResetToken);
         return new AuthResponses.MessageResponse(message("auth.password_reset.requested"));
     }
@@ -167,16 +167,16 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public AuthResponses.MessageResponse resetPassword(AuthRequests.ResetPasswordRequest request) {
-        PasswordResetToken token = passwordResetTokenRepository.findByTokenHash(TokenHashing.sha256(request.token()))
+        PasswordResetToken token = passwordResetTokenRepository.findByTokenHash(TokenHashing.sha256(request.getToken()))
             .orElseThrow(() -> new BusinessException("error.invalid_token"));
         Instant now = Instant.now();
         if (!token.isUsable(now)) {
             throw new BusinessException("error.invalid_token");
         }
-        passwordPolicyValidator.validate(request.password());
+        passwordPolicyValidator.validate(request.getPassword());
 
         User user = token.getUser();
-        user.setPasswordHash(passwordEncoder.encode(request.password()));
+        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         userRepository.save(user);
 
         token.setConsumedAt(now);

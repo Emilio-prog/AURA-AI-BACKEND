@@ -76,16 +76,16 @@ public class DiaryServiceImpl implements DiaryService {
     @Transactional
     public DomainResponses.DiaryEntryResponse create(DomainRequests.DiaryEntryRequest request) {
         User user = currentUser();
-        String title = blankToNull(request.title());
-        String content = request.content().trim();
-        String moodLabel = blankToNull(request.moodLabel());
+        String title = blankToNull(request.getTitle());
+        String content = request.getContent().trim();
+        String moodLabel = blankToNull(request.getMoodLabel());
         DiaryEntry entry = DiaryEntry.builder()
             .user(user)
             .title(contentCryptoService.encrypt(user.getId(), SCOPE_TITLE, title))
             .content(contentCryptoService.encrypt(user.getId(), SCOPE_CONTENT, content))
-            .moodScore(request.moodScore())
+            .moodScore(request.getMoodScore())
             .moodLabel(contentCryptoService.encrypt(user.getId(), SCOPE_MOOD_LABEL, moodLabel))
-            .tags(normalizeTags(request.tags()))
+            .tags(normalizeTags(request.getTags()))
             .searchTokens(contentCryptoService.searchTokens(user.getId(), title, content))
             .build();
         DiaryEntry saved = diaryEntryRepository.save(entry);
@@ -96,15 +96,15 @@ public class DiaryServiceImpl implements DiaryService {
     @Transactional
     public DomainResponses.DiaryEntryResponse update(UUID id, DomainRequests.DiaryEntryRequest request) {
         User user = currentUser();
-        String title = blankToNull(request.title());
-        String content = request.content().trim();
-        String moodLabel = blankToNull(request.moodLabel());
+        String title = blankToNull(request.getTitle());
+        String content = request.getContent().trim();
+        String moodLabel = blankToNull(request.getMoodLabel());
         DiaryEntry entry = findOwned(id, user);
         entry.setTitle(contentCryptoService.encrypt(user.getId(), SCOPE_TITLE, title));
         entry.setContent(contentCryptoService.encrypt(user.getId(), SCOPE_CONTENT, content));
-        entry.setMoodScore(request.moodScore());
+        entry.setMoodScore(request.getMoodScore());
         entry.setMoodLabel(contentCryptoService.encrypt(user.getId(), SCOPE_MOOD_LABEL, moodLabel));
-        entry.setTags(normalizeTags(request.tags()));
+        entry.setTags(normalizeTags(request.getTags()));
         entry.setSearchTokens(contentCryptoService.searchTokens(user.getId(), title, content));
         DiaryEntry saved = diaryEntryRepository.save(entry);
         return response(saved, title, content, moodLabel);

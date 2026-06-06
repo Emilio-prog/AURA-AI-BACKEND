@@ -65,14 +65,14 @@ public class AchievementServiceImpl implements AchievementService {
     @Transactional
     public AchievementResponses.AchievementListResponse recordEvent(AchievementRequests.EventRequest request) {
         User user = currentUser();
-        String idempotencyKey = request.idempotencyKey().trim();
+        String idempotencyKey = request.getIdempotencyKey().trim();
         if (achievementEventRepository.findByUserAndIdempotencyKey(user, idempotencyKey).isEmpty()) {
             achievementEventRepository.save(AchievementEvent.builder()
                 .user(user)
-                .eventType(request.type())
+                .eventType(request.getType())
                 .idempotencyKey(idempotencyKey)
-                .occurredAt(request.occurredAt() == null ? Instant.now() : request.occurredAt())
-                .metadata(request.metadata() == null ? new LinkedHashMap<>() : new LinkedHashMap<>(request.metadata()))
+                .occurredAt(request.getOccurredAt() == null ? Instant.now() : request.getOccurredAt())
+                .metadata(request.getMetadata() == null ? new LinkedHashMap<>() : new LinkedHashMap<>(request.getMetadata()))
                 .build());
         }
         return evaluateAndRespond(user);
@@ -99,7 +99,7 @@ public class AchievementServiceImpl implements AchievementService {
         List<AchievementResponses.AchievementResponse> achievements = CATALOG.stream()
             .map(definition -> responseFor(user, definition, metrics, unlocked))
             .toList();
-        int unlockedCount = (int) achievements.stream().filter(AchievementResponses.AchievementResponse::unlocked).count();
+        int unlockedCount = (int) achievements.stream().filter(AchievementResponses.AchievementResponse::isUnlocked).count();
         return new AchievementResponses.AchievementListResponse(achievements.size(), unlockedCount, achievements);
     }
 
@@ -107,54 +107,54 @@ public class AchievementServiceImpl implements AchievementService {
                                                                  Definition definition,
                                                                  Metrics metrics,
                                                                  Map<AchievementCode, UserAchievement> unlocked) {
-        int progress = Math.min(progress(definition.code(), metrics), definition.target());
-        UserAchievement achievement = unlocked.get(definition.code());
-        if (achievement == null && progress >= definition.target()) {
+        int progress = Math.min(progress(definition.getCode(), metrics), definition.getTarget());
+        UserAchievement achievement = unlocked.get(definition.getCode());
+        if (achievement == null && progress >= definition.getTarget()) {
             achievement = userAchievementRepository.save(UserAchievement.builder()
                 .user(user)
-                .code(definition.code())
+                .code(definition.getCode())
                 .unlockedAt(Instant.now())
                 .progressSnapshot(snapshot(definition, progress))
                 .build());
-            unlocked.put(definition.code(), achievement);
+            unlocked.put(definition.getCode(), achievement);
         }
         boolean isUnlocked = achievement != null;
         return new AchievementResponses.AchievementResponse(
-            definition.code(),
-            definition.title(),
-            definition.description(),
-            definition.category(),
-            definition.accent(),
+            definition.getCode(),
+            definition.getTitle(),
+            definition.getDescription(),
+            definition.getCategory(),
+            definition.getAccent(),
             progress,
-            definition.target(),
+            definition.getTarget(),
             isUnlocked,
             isUnlocked ? achievement.getUnlockedAt() : null,
-            progress + "/" + definition.target()
+            progress + "/" + definition.getTarget()
         );
     }
 
     private int progress(AchievementCode code, Metrics metrics) {
         return switch (code) {
-            case REFUGIO_ACTIVADO -> metrics.onboardingCompleted();
-            case PRIMER_CHAT_AURA -> metrics.chatSessions();
-            case PRIMERA_ENTRADA_DIARIO -> metrics.diaryEntries();
-            case SIETE_DIAS_DIARIO -> metrics.diaryDays();
-            case PRIMER_CHECKIN_MOOD -> metrics.moodLogs();
-            case TRES_DIAS_MOOD -> metrics.moodDays();
-            case RED_SOS_ACTIVA -> metrics.activeSosContacts();
+            case REFUGIO_ACTIVADO -> metrics.getOnboardingCompleted();
+            case PRIMER_CHAT_AURA -> metrics.getChatSessions();
+            case PRIMERA_ENTRADA_DIARIO -> metrics.getDiaryEntries();
+            case SIETE_DIAS_DIARIO -> metrics.getDiaryDays();
+            case PRIMER_CHECKIN_MOOD -> metrics.getMoodLogs();
+            case TRES_DIAS_MOOD -> metrics.getMoodDays();
+            case RED_SOS_ACTIVA -> metrics.getActiveSosContacts();
             case EXPLORADOR_CALMA -> calmExplorerProgress(metrics);
         };
     }
 
     private int calmExplorerProgress(Metrics metrics) {
         int progress = 0;
-        if (metrics.breathingCompleted()) {
+        if (metrics.isBreathingCompleted()) {
             progress++;
         }
-        if (metrics.soundscapePlayed()) {
+        if (metrics.isSoundscapePlayed()) {
             progress++;
         }
-        if (metrics.minigameOpened()) {
+        if (metrics.isMinigameOpened()) {
             progress++;
         }
         return progress;
@@ -163,7 +163,7 @@ public class AchievementServiceImpl implements AchievementService {
     private Map<String, Object> snapshot(Definition definition, int progress) {
         Map<String, Object> snapshot = new LinkedHashMap<>();
         snapshot.put("progress", progress);
-        snapshot.put("target", definition.target());
+        snapshot.put("target", definition.getTarget());
         snapshot.put("evaluatedAt", Instant.now().toString());
         return snapshot;
     }
@@ -196,27 +196,185 @@ public class AchievementServiceImpl implements AchievementService {
         return value > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) value;
     }
 
-    private record Definition(
-        AchievementCode code,
-        String title,
-        String description,
-        String category,
-        String accent,
-        int target
-    ) {
+    private static class Definition {
+        private AchievementCode code;
+        private String title;
+        private String description;
+        private String category;
+        private String accent;
+        private int target;
+
+        private Definition() {
+        }
+
+        private Definition(AchievementCode code, String title, String description,
+                           String category, String accent, int target) {
+            this.code = code;
+            this.title = title;
+            this.description = description;
+            this.category = category;
+            this.accent = accent;
+            this.target = target;
+        }
+
+        private AchievementCode getCode() {
+            return code;
+        }
+
+        private void setCode(AchievementCode code) {
+            this.code = code;
+        }
+
+        private String getTitle() {
+            return title;
+        }
+
+        private void setTitle(String title) {
+            this.title = title;
+        }
+
+        private String getDescription() {
+            return description;
+        }
+
+        private void setDescription(String description) {
+            this.description = description;
+        }
+
+        private String getCategory() {
+            return category;
+        }
+
+        private void setCategory(String category) {
+            this.category = category;
+        }
+
+        private String getAccent() {
+            return accent;
+        }
+
+        private void setAccent(String accent) {
+            this.accent = accent;
+        }
+
+        private int getTarget() {
+            return target;
+        }
+
+        private void setTarget(int target) {
+            this.target = target;
+        }
     }
 
-    private record Metrics(
-        int onboardingCompleted,
-        int chatSessions,
-        int diaryEntries,
-        int diaryDays,
-        int moodLogs,
-        int moodDays,
-        int activeSosContacts,
-        boolean breathingCompleted,
-        boolean soundscapePlayed,
-        boolean minigameOpened
-    ) {
+    private static class Metrics {
+        private int onboardingCompleted;
+        private int chatSessions;
+        private int diaryEntries;
+        private int diaryDays;
+        private int moodLogs;
+        private int moodDays;
+        private int activeSosContacts;
+        private boolean breathingCompleted;
+        private boolean soundscapePlayed;
+        private boolean minigameOpened;
+
+        private Metrics() {
+        }
+
+        private Metrics(int onboardingCompleted, int chatSessions, int diaryEntries,
+                        int diaryDays, int moodLogs, int moodDays, int activeSosContacts,
+                        boolean breathingCompleted, boolean soundscapePlayed,
+                        boolean minigameOpened) {
+            this.onboardingCompleted = onboardingCompleted;
+            this.chatSessions = chatSessions;
+            this.diaryEntries = diaryEntries;
+            this.diaryDays = diaryDays;
+            this.moodLogs = moodLogs;
+            this.moodDays = moodDays;
+            this.activeSosContacts = activeSosContacts;
+            this.breathingCompleted = breathingCompleted;
+            this.soundscapePlayed = soundscapePlayed;
+            this.minigameOpened = minigameOpened;
+        }
+
+        private int getOnboardingCompleted() {
+            return onboardingCompleted;
+        }
+
+        private void setOnboardingCompleted(int onboardingCompleted) {
+            this.onboardingCompleted = onboardingCompleted;
+        }
+
+        private int getChatSessions() {
+            return chatSessions;
+        }
+
+        private void setChatSessions(int chatSessions) {
+            this.chatSessions = chatSessions;
+        }
+
+        private int getDiaryEntries() {
+            return diaryEntries;
+        }
+
+        private void setDiaryEntries(int diaryEntries) {
+            this.diaryEntries = diaryEntries;
+        }
+
+        private int getDiaryDays() {
+            return diaryDays;
+        }
+
+        private void setDiaryDays(int diaryDays) {
+            this.diaryDays = diaryDays;
+        }
+
+        private int getMoodLogs() {
+            return moodLogs;
+        }
+
+        private void setMoodLogs(int moodLogs) {
+            this.moodLogs = moodLogs;
+        }
+
+        private int getMoodDays() {
+            return moodDays;
+        }
+
+        private void setMoodDays(int moodDays) {
+            this.moodDays = moodDays;
+        }
+
+        private int getActiveSosContacts() {
+            return activeSosContacts;
+        }
+
+        private void setActiveSosContacts(int activeSosContacts) {
+            this.activeSosContacts = activeSosContacts;
+        }
+
+        private boolean isBreathingCompleted() {
+            return breathingCompleted;
+        }
+
+        private void setBreathingCompleted(boolean breathingCompleted) {
+            this.breathingCompleted = breathingCompleted;
+        }
+
+        private boolean isSoundscapePlayed() {
+            return soundscapePlayed;
+        }
+
+        private void setSoundscapePlayed(boolean soundscapePlayed) {
+            this.soundscapePlayed = soundscapePlayed;
+        }
+
+        private boolean isMinigameOpened() {
+            return minigameOpened;
+        }
+
+        private void setMinigameOpened(boolean minigameOpened) {
+            this.minigameOpened = minigameOpened;
+        }
     }
 }

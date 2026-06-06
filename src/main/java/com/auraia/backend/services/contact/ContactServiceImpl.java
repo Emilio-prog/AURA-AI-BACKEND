@@ -31,8 +31,8 @@ public class ContactServiceImpl implements ContactService {
         User user = currentUser();
         return contactRepository.findByUserOrderByPriorityAscNameAsc(user).stream()
             .map(contact -> decryptAndProtect(contact, user))
-            .sorted(Comparator.comparingInt(DomainResponses.ContactResponse::priority)
-                .thenComparing(response -> response.name().toLowerCase(java.util.Locale.ROOT)))
+            .sorted(Comparator.comparingInt(DomainResponses.ContactResponse::getPriority)
+                .thenComparing(response -> response.getName().toLowerCase(java.util.Locale.ROOT)))
             .toList();
     }
 
@@ -40,17 +40,17 @@ public class ContactServiceImpl implements ContactService {
     @Transactional
     public DomainResponses.ContactResponse create(DomainRequests.ContactRequest request) {
         User user = currentUser();
-        String name = request.name().trim();
-        String phone = request.phone().trim();
-        String relationship = blankToNull(request.relationship());
+        String name = request.getName().trim();
+        String phone = request.getPhone().trim();
+        String relationship = blankToNull(request.getRelationship());
         Contact contact = Contact.builder()
             .user(user)
             .name(contentCryptoService.encrypt(user.getId(), "contact.name", name))
             .phone(contentCryptoService.encrypt(user.getId(), "contact.phone", phone))
             .relationship(contentCryptoService.encrypt(user.getId(), "contact.relationship", relationship))
-            .priority(request.priority() == null ? 1 : request.priority())
-            .available(request.available() == null || request.available())
-            .sosEnabled(Boolean.TRUE.equals(request.sosEnabled()))
+            .priority(request.getPriority() == null ? 1 : request.getPriority())
+            .available(request.getAvailable() == null || request.getAvailable())
+            .sosEnabled(Boolean.TRUE.equals(request.getSosEnabled()))
             .build();
         return response(contactRepository.save(contact), name, phone, relationship);
     }
@@ -59,16 +59,16 @@ public class ContactServiceImpl implements ContactService {
     @Transactional
     public DomainResponses.ContactResponse update(UUID id, DomainRequests.ContactRequest request) {
         User user = currentUser();
-        String name = request.name().trim();
-        String phone = request.phone().trim();
-        String relationship = blankToNull(request.relationship());
+        String name = request.getName().trim();
+        String phone = request.getPhone().trim();
+        String relationship = blankToNull(request.getRelationship());
         Contact contact = findOwned(id, user);
         contact.setName(contentCryptoService.encrypt(user.getId(), "contact.name", name));
         contact.setPhone(contentCryptoService.encrypt(user.getId(), "contact.phone", phone));
         contact.setRelationship(contentCryptoService.encrypt(user.getId(), "contact.relationship", relationship));
-        contact.setPriority(request.priority() == null ? 1 : request.priority());
-        contact.setAvailable(request.available() == null || request.available());
-        contact.setSosEnabled(Boolean.TRUE.equals(request.sosEnabled()));
+        contact.setPriority(request.getPriority() == null ? 1 : request.getPriority());
+        contact.setAvailable(request.getAvailable() == null || request.getAvailable());
+        contact.setSosEnabled(Boolean.TRUE.equals(request.getSosEnabled()));
         return response(contactRepository.save(contact), name, phone, relationship);
     }
 

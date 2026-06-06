@@ -41,14 +41,14 @@ public class AdminUserServiceImpl implements AdminUserService {
     @Transactional
     public UserResponses.AdminUserResponse updateUser(UUID id, AdminRequests.AdminUpdateUserRequest request) {
         User target = findUser(id);
-        if (request.role() != null) {
-            target.setRole(request.role());
+        if (request.getRole() != null) {
+            target.setRole(request.getRole());
         }
-        if (request.plan() != null) {
-            target.setPlan(request.plan());
+        if (request.getPlan() != null) {
+            target.setPlan(request.getPlan());
         }
-        if (request.emailVerified() != null) {
-            target.setEmailVerified(request.emailVerified());
+        if (request.getEmailVerified() != null) {
+            target.setEmailVerified(request.getEmailVerified());
         }
         User saved = userRepository.save(target);
         audit("ADMIN_UPDATE_USER", saved, Map.of("role", saved.getRole().name(), "plan", saved.getPlan().name()));
@@ -81,6 +81,6 @@ public class AdminUserServiceImpl implements AdminUserService {
 
     private void audit(String action, User target, Map<String, Object> metadata) {
         User actor = userRepository.findById(SecurityUtils.currentUserId()).orElse(null);
-        auditService.record(actor, action, "User", target.getId().toString(), metadata);
+        auditService.registrar(actor, action, "User", target.getId().toString(), metadata);
     }
 }

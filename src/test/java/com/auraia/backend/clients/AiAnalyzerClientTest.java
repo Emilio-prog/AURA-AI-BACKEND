@@ -20,8 +20,8 @@ class AiAnalyzerClientTest {
 
         AiChatResponse response = client.chat(List.of(), "tengo una crisis y puedo hacerme dano");
 
-        assertThat(response.riskLevel()).isEqualTo("high");
-        assertThat(response.reply()).contains("112").contains("024");
+        assertThat(response.getRiskLevel()).isEqualTo("high");
+        assertThat(response.getReply()).contains("112").contains("024");
     }
 
     @Test
@@ -46,8 +46,8 @@ class AiAnalyzerClientTest {
 
         AiChatResponse response = client.chat(List.of(), "siento ansiedad");
 
-        assertThat(response.reply()).contains("ansiedad");
-        assertThat(response.riskLevel()).isEqualTo("medium");
+        assertThat(response.getReply()).contains("ansiedad");
+        assertThat(response.getRiskLevel()).isEqualTo("medium");
     }
 
     @Test
@@ -63,10 +63,10 @@ class AiAnalyzerClientTest {
 
         AiChatResponse response = client.chat(List.of(), "me siento inquieto");
 
-        assertThat(response.reply()).contains("Respira lento");
-        assertThat(response.sentiment()).isEqualTo("supportive");
-        assertThat(response.riskLevel()).isEqualTo("low");
-        assertThat(response.emotions()).isEmpty();
+        assertThat(response.getReply()).contains("Respira lento");
+        assertThat(response.getSentiment()).isEqualTo("supportive");
+        assertThat(response.getRiskLevel()).isEqualTo("low");
+        assertThat(response.getEmotions()).isEmpty();
     }
 
     @Test
@@ -84,8 +84,8 @@ class AiAnalyzerClientTest {
 
         AiChatResponse response = client.chat(List.of(), "no puedo dormir");
 
-        assertThat(response.reply()).contains("Dormir mal");
-        assertThat(response.riskLevel()).isEqualTo("low");
+        assertThat(response.getReply()).contains("Dormir mal");
+        assertThat(response.getRiskLevel()).isEqualTo("low");
     }
 
     @Test
@@ -101,9 +101,9 @@ class AiAnalyzerClientTest {
 
         AiChatResponse response = client.chat(List.of(), "me siento al limite");
 
-        assertThat(response.riskLevel()).isEqualTo("high");
-        assertThat(response.sentiment()).isEqualTo("crisis");
-        assertThat(response.reply()).contains("112").contains("024");
+        assertThat(response.getRiskLevel()).isEqualTo("high");
+        assertThat(response.getSentiment()).isEqualTo("crisis");
+        assertThat(response.getReply()).contains("112").contains("024");
     }
 
     @Test
@@ -119,8 +119,8 @@ class AiAnalyzerClientTest {
 
         AiChatResponse response = client.chat(List.of(), "necesito calmarme");
 
-        assertThat(response.riskLevel()).isEqualTo("medium");
-        assertThat(response.sentiment()).isEqualTo("supportive");
-        assertThat(response.reply()).doesNotContain("112").doesNotContain("024");
+        assertThat(response.getRiskLevel()).isEqualTo("medium");
+        assertThat(response.getSentiment()).isEqualTo("supportive");
+        assertThat(response.getReply()).doesNotContain("112").doesNotContain("024");
     }
 }

@@ -167,9 +167,9 @@ class WebPushServiceImplTest {
 
         var response = service.config();
 
-        assertThat(response.enabled()).isTrue();
-        assertThat(response.publicKey()).isEqualTo("public-key");
-        assertThat(response.subscribed()).isTrue();
+        assertThat(response.isEnabled()).isTrue();
+        assertThat(response.getPublicKey()).isEqualTo("public-key");
+        assertThat(response.isSubscribed()).isTrue();
     }
 
     @Test
@@ -206,7 +206,7 @@ class WebPushServiceImplTest {
 
         var response = service.test();
 
-        assertThat(response.sent()).isFalse();
+        assertThat(response.isSent()).isFalse();
         assertThat(subscription.isActive()).isFalse();
         assertThat(subscription.getRevokedAt()).isNotNull();
         ArgumentCaptor<WebPushDelivery> captor = ArgumentCaptor.forClass(WebPushDelivery.class);

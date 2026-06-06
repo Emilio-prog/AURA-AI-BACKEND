@@ -97,7 +97,7 @@ public class GoogleOAuthService {
             }
 
             GoogleOAuthUser googleUser = googleOAuthClient.fetchUser(code);
-            if (!googleUser.emailVerified()) {
+            if (!googleUser.isEmailVerified()) {
                 throw new BusinessException("error.google_oauth_email_unverified");
             }
 
@@ -119,7 +119,7 @@ public class GoogleOAuthService {
 
     @Transactional
     public AuthResponses.AuthResponse exchange(AuthRequests.OAuthExchangeRequest request) {
-        OAuthExchangeCode exchangeCode = exchangeCodeRepository.findByCodeHash(TokenHashing.sha256(request.code()))
+        OAuthExchangeCode exchangeCode = exchangeCodeRepository.findByCodeHash(TokenHashing.sha256(request.getCode()))
             .orElseThrow(() -> new BusinessException("error.invalid_token"));
         Instant now = Instant.now();
         if (!exchangeCode.isUsable(now)) {
@@ -172,7 +172,7 @@ public class GoogleOAuthService {
             if (state.getUser() == null || state.getUser().isDeleted()) {
                 throw new UnauthorizedException("Authentication required");
             }
-            String email = normalizeEmail(googleUser.email());
+            String email = normalizeEmail(googleUser.getEmail());
             userRepository.findByEmailIgnoreCaseAndDeletedAtIsNull(email)
                 .filter(existing -> !existing.getId().equals(state.getUser().getId()))
                 .ifPresent(existing -> {
@@ -181,10 +181,10 @@ public class GoogleOAuthService {
             return state.getUser();
         }
 
-        return identityRepository.findByProviderAndProviderSubjectAndActiveTrue(PROVIDER_GOOGLE, googleUser.subject())
+        return identityRepository.findByProviderAndProviderSubjectAndActiveTrue(PROVIDER_GOOGLE, googleUser.getSubject())
             .map(OAuthIdentity::getUser)
             .filter(user -> !user.isDeleted())
-            .orElseGet(() -> userRepository.findByEmailIgnoreCase(normalizeEmail(googleUser.email()))
+            .orElseGet(() -> userRepository.findByEmailIgnoreCase(normalizeEmail(googleUser.getEmail()))
                 .map(user -> {
                     if (user.isDeleted()) {
                         throw new BusinessException("error.google_oauth_email_conflict");
@@ -196,7 +196,7 @@ public class GoogleOAuthService {
     }
 
     private void linkIdentity(User user, GoogleOAuthUser googleUser) {
-        identityRepository.findByProviderAndProviderSubjectAndActiveTrue(PROVIDER_GOOGLE, googleUser.subject())
+        identityRepository.findByProviderAndProviderSubjectAndActiveTrue(PROVIDER_GOOGLE, googleUser.getSubject())
             .filter(existing -> !existing.getUser().getId().equals(user.getId()))
             .ifPresent(existing -> {
                 throw new BusinessException("error.google_oauth_email_conflict");
@@ -204,7 +204,7 @@ public class GoogleOAuthService {
 
         OAuthIdentity identity = identityRepository.findByUserAndProviderAndActiveTrue(user, PROVIDER_GOOGLE)
             .orElse(null);
-        if (identity != null && !identity.getProviderSubject().equals(googleUser.subject())) {
+        if (identity != null && !identity.getProviderSubject().equals(googleUser.getSubject())) {
             throw new BusinessException("error.google_oauth_email_conflict");
         }
         Instant now = Instant.now();
@@ -212,18 +212,18 @@ public class GoogleOAuthService {
             identity = OAuthIdentity.builder()
                 .user(user)
                 .provider(PROVIDER_GOOGLE)
-                .providerSubject(googleUser.subject())
+                .providerSubject(googleUser.getSubject())
                 .active(true)
                 .linkedAt(now)
                 .build();
         }
-        identity.setEmail(normalizeEmail(googleUser.email()));
-        identity.setEmailVerified(googleUser.emailVerified());
+        identity.setEmail(normalizeEmail(googleUser.getEmail()));
+        identity.setEmailVerified(googleUser.isEmailVerified());
         identityRepository.save(identity);
     }
 
     private User createGoogleUser(GoogleOAuthUser googleUser) {
-        String email = normalizeEmail(googleUser.email());
+        String email = normalizeEmail(googleUser.getEmail());
         User user = User.builder()
             .email(email)
             .passwordHash(null)
@@ -323,8 +323,8 @@ public class GoogleOAuthService {
     }
 
     private String displayName(GoogleOAuthUser googleUser, String email) {
-        if (googleUser.name() != null && !googleUser.name().isBlank()) {
-            return googleUser.name().trim();
+        if (googleUser.getName() != null && !googleUser.getName().isBlank()) {
+            return googleUser.getName().trim();
         }
         int at = email.indexOf('@');
         return at > 1 ? email.substring(0, at) : "AURA User";

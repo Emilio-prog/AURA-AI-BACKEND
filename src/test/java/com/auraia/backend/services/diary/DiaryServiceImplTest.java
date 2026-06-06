@@ -102,7 +102,7 @@ class DiaryServiceImplTest {
             List.of(" Ansiedad ", "#Sueño ligero", "ansiedad", "", "gratitud")
         ));
 
-        assertThat(response.tags()).containsExactly("ansiedad", "sueño-ligero", "gratitud");
+        assertThat(response.getTags()).containsExactly("ansiedad", "sueño-ligero", "gratitud");
         ArgumentCaptor<DiaryEntry> captor = ArgumentCaptor.forClass(DiaryEntry.class);
         verify(diaryEntryRepository).save(captor.capture());
         assertThat(captor.getValue().getTags()).containsExactly("ansiedad", "sueño-ligero", "gratitud");
@@ -158,9 +158,9 @@ class DiaryServiceImplTest {
             " respirar ",
             List.of("Ansiedad", "Sueño"),
             PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "createdAt"))
-        ).content().getFirst();
+        ).getContent().getFirst();
 
-        assertThat(response.tags()).containsExactly("ansiedad", "sueño");
+        assertThat(response.getTags()).containsExactly("ansiedad", "sueño");
         ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
         verify(entityManager).createNativeQuery(sqlCaptor.capture(), eq(DiaryEntry.class));
         assertThat(sqlCaptor.getValue())
@@ -197,10 +197,10 @@ class DiaryServiceImplTest {
             null,
             List.of(),
             PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "createdAt"))
-        ).content().getFirst();
+        ).getContent().getFirst();
 
-        assertThat(response.title()).isEqualTo("Titulo");
-        assertThat(response.content()).isEqualTo("Contenido");
+        assertThat(response.getTitle()).isEqualTo("Titulo");
+        assertThat(response.getContent()).isEqualTo("Contenido");
         verify(diaryEntryRepository, never()).save(any(DiaryEntry.class));
     }
 

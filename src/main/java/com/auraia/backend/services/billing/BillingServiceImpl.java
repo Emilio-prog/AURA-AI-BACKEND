@@ -62,7 +62,7 @@ public class BillingServiceImpl implements BillingService {
     @Override
     @Transactional
     public BillingResponses.RedirectResponse createCheckout(BillingRequests.CheckoutRequest request) {
-        Plan requestedPlan = paidPlan(request.plan());
+        Plan requestedPlan = paidPlan(request.getPlan());
         configureStripe();
 
         User user = currentUser();
@@ -106,7 +106,7 @@ public class BillingServiceImpl implements BillingService {
         User user = currentUser();
 
         try {
-            Session session = Session.retrieve(request.sessionId());
+            Session session = Session.retrieve(request.getSessionId());
             JsonNode sessionNode = objectMapper.readTree(session.toJson());
             String sessionUserId = sessionNode.path("metadata").path("userId").asText(null);
             if (!user.getId().toString().equals(sessionUserId)) {

@@ -17,7 +17,7 @@ public class AuditService {
     private final AuditLogRepository auditLogRepository;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void record(User actor, String action, String entityType, String entityId, Map<String, Object> metadata) {
+    public void registrar(User actor, String action, String entityType, String entityId, Map<String, Object> metadata) {
         auditLogRepository.save(AuditLog.builder()
             .actorUser(actor)
             .action(action)

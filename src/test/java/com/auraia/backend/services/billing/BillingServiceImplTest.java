@@ -91,11 +91,11 @@ class BillingServiceImplTest {
 
         BillingResponses.BillingStatusResponse response = service.currentBilling();
 
-        assertThat(response.plan()).isEqualTo(Plan.FREE);
-        assertThat(response.status()).isEqualTo("none");
-        assertThat(response.customerPortalAvailable()).isFalse();
-        assertThat(response.testMode()).isTrue();
-        assertThat(response.billingConfigured()).isTrue();
+        assertThat(response.getPlan()).isEqualTo(Plan.FREE);
+        assertThat(response.getStatus()).isEqualTo("none");
+        assertThat(response.isCustomerPortalAvailable()).isFalse();
+        assertThat(response.isTestMode()).isTrue();
+        assertThat(response.isBillingConfigured()).isTrue();
     }
 
     @Test

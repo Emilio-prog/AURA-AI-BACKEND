@@ -61,7 +61,7 @@ public class AiChatRateLimitFilter extends OncePerRequestFilter {
     private String bucketKey(HttpServletRequest request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getPrincipal() instanceof UserPrincipal principal) {
-            return principal.id() + ":chat";
+            return principal.getId() + ":chat";
         }
         return null;
     }

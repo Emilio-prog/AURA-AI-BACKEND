@@ -159,7 +159,7 @@ class UserServiceImplTest {
 
         UserResponses.UserResponse response = service.completeOnboarding(validRequest());
 
-        assertThat(response.onboardedAt()).isNotNull();
+        assertThat(response.getOnboardedAt()).isNotNull();
         assertThat(user.getName()).isEqualTo("Emilio");
         assertThat(user.getOnboardingConsentAt()).isNotNull();
         assertThat(user.getOnboardingConsentVersion()).isEqualTo("privacy:2026-05-10;terms:2026-05-10;onboarding:v1");
@@ -218,7 +218,7 @@ class UserServiceImplTest {
 
         UserResponses.UserResponse response = service.completeOnboarding(validRequest());
 
-        assertThat(response.onboardedAt()).isEqualTo(Instant.parse("2026-05-10T12:00:00Z"));
+        assertThat(response.getOnboardedAt()).isEqualTo(Instant.parse("2026-05-10T12:00:00Z"));
         verify(userRepository, never()).save(any(User.class));
         verify(userSettingsRepository, never()).save(any(UserSettings.class));
         verify(contactRepository, never()).save(any(Contact.class));
@@ -243,7 +243,7 @@ class UserServiceImplTest {
             "ELIMINAR MI CUENTA"
         );
 
-        assertThat(service.deleteCurrentAccount(request).message()).isEqualTo("OK");
+        assertThat(service.deleteCurrentAccount(request).getMessage()).isEqualTo("OK");
         verify(userDeletionService).deletePermanently(user);
     }
 
@@ -255,7 +255,7 @@ class UserServiceImplTest {
             "ELIMINAR MI CUENTA"
         );
 
-        assertThat(service.deleteCurrentAccount(request).message()).isEqualTo("OK");
+        assertThat(service.deleteCurrentAccount(request).getMessage()).isEqualTo("OK");
         verify(userDeletionService).deletePermanently(user);
     }
 

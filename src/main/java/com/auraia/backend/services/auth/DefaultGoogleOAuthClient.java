@@ -68,24 +68,24 @@ public class DefaultGoogleOAuthClient implements GoogleOAuthClient {
             .retrieve()
             .body(GoogleTokenResponse.class);
 
-        if (token == null || isBlank(token.accessToken())) {
+        if (token == null || isBlank(token.getAccessToken())) {
             throw new BusinessException("error.google_oauth_failed");
         }
 
         GoogleUserInfoResponse userInfo = restClient.get()
             .uri(USERINFO_URL)
-            .headers(headers -> headers.setBearerAuth(token.accessToken()))
+            .headers(headers -> headers.setBearerAuth(token.getAccessToken()))
             .retrieve()
             .body(GoogleUserInfoResponse.class);
 
-        if (userInfo == null || isBlank(userInfo.subject()) || isBlank(userInfo.email())) {
+        if (userInfo == null || isBlank(userInfo.getSubject()) || isBlank(userInfo.getEmail())) {
             throw new BusinessException("error.google_oauth_failed");
         }
         return new GoogleOAuthUser(
-            userInfo.subject(),
-            userInfo.email(),
-            Boolean.TRUE.equals(userInfo.emailVerified()),
-            userInfo.name()
+            userInfo.getSubject(),
+            userInfo.getEmail(),
+            Boolean.TRUE.equals(userInfo.getEmailVerified()),
+            userInfo.getName()
         );
     }
 
@@ -99,14 +99,77 @@ public class DefaultGoogleOAuthClient implements GoogleOAuthClient {
         return value == null || value.isBlank();
     }
 
-    private record GoogleTokenResponse(@JsonProperty("access_token") String accessToken) {
+    private static class GoogleTokenResponse {
+        @JsonProperty("access_token")
+        private String accessToken;
+
+        private GoogleTokenResponse() {
+        }
+
+        private GoogleTokenResponse(String accessToken) {
+            this.accessToken = accessToken;
+        }
+
+        private String getAccessToken() {
+            return accessToken;
+        }
+
+        private void setAccessToken(String accessToken) {
+            this.accessToken = accessToken;
+        }
     }
 
-    private record GoogleUserInfoResponse(
-        @JsonProperty("sub") String subject,
-        String email,
-        @JsonProperty("email_verified") Boolean emailVerified,
-        String name
-    ) {
+    private static class GoogleUserInfoResponse {
+        @JsonProperty("sub")
+        private String subject;
+
+        private String email;
+
+        @JsonProperty("email_verified")
+        private Boolean emailVerified;
+
+        private String name;
+
+        private GoogleUserInfoResponse() {
+        }
+
+        private GoogleUserInfoResponse(String subject, String email, Boolean emailVerified, String name) {
+            this.subject = subject;
+            this.email = email;
+            this.emailVerified = emailVerified;
+            this.name = name;
+        }
+
+        private String getSubject() {
+            return subject;
+        }
+
+        private void setSubject(String subject) {
+            this.subject = subject;
+        }
+
+        private String getEmail() {
+            return email;
+        }
+
+        private void setEmail(String email) {
+            this.email = email;
+        }
+
+        private Boolean getEmailVerified() {
+            return emailVerified;
+        }
+
+        private void setEmailVerified(Boolean emailVerified) {
+            this.emailVerified = emailVerified;
+        }
+
+        private String getName() {
+            return name;
+        }
+
+        private void setName(String name) {
+            this.name = name;
+        }
     }
 }

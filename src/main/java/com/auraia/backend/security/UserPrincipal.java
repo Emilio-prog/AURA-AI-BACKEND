@@ -8,13 +8,24 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-public record UserPrincipal(
-    UUID id,
-    String email,
-    String password,
-    boolean enabled,
-    Collection<? extends GrantedAuthority> authorities
-) implements UserDetails {
+public class UserPrincipal implements UserDetails {
+    private UUID id;
+    private String email;
+    private String password;
+    private boolean enabled;
+    private Collection<? extends GrantedAuthority> authorities;
+
+    public UserPrincipal() {
+    }
+
+    public UserPrincipal(UUID id, String email, String password, boolean enabled,
+                         Collection<? extends GrantedAuthority> authorities) {
+        this.id = id;
+        this.email = email;
+        this.password = password;
+        this.enabled = enabled;
+        this.authorities = authorities;
+    }
 
     public static UserPrincipal from(User user) {
         return new UserPrincipal(
@@ -24,6 +35,34 @@ public record UserPrincipal(
             user.isEmailVerified() && !user.isDeleted(),
             List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))
         );
+    }
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    public void setAuthorities(Collection<? extends GrantedAuthority> authorities) {
+        this.authorities = authorities;
     }
 
     @Override

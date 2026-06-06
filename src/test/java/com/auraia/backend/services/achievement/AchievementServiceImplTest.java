@@ -137,11 +137,11 @@ class AchievementServiceImplTest {
 
         AchievementResponses.AchievementListResponse response = service.list();
 
-        assertThat(response.total()).isEqualTo(8);
-        assertThat(response.unlocked()).isEqualTo(7);
-        assertThat(response.achievements())
-            .filteredOn(AchievementResponses.AchievementResponse::unlocked)
-            .extracting(AchievementResponses.AchievementResponse::code)
+        assertThat(response.getTotal()).isEqualTo(8);
+        assertThat(response.getUnlocked()).isEqualTo(7);
+        assertThat(response.getAchievements())
+            .filteredOn(AchievementResponses.AchievementResponse::isUnlocked)
+            .extracting(AchievementResponses.AchievementResponse::getCode)
             .contains(
                 AchievementCode.REFUGIO_ACTIVADO,
                 AchievementCode.PRIMER_CHAT_AURA,
@@ -183,12 +183,12 @@ class AchievementServiceImplTest {
 
         AchievementResponses.AchievementListResponse response = service.list();
 
-        assertThat(response.achievements())
-            .filteredOn(achievement -> achievement.code() == AchievementCode.EXPLORADOR_CALMA)
+        assertThat(response.getAchievements())
+            .filteredOn(achievement -> achievement.getCode() == AchievementCode.EXPLORADOR_CALMA)
             .singleElement()
             .satisfies(achievement -> {
-                assertThat(achievement.progress()).isEqualTo(3);
-                assertThat(achievement.unlocked()).isTrue();
+                assertThat(achievement.getProgress()).isEqualTo(3);
+                assertThat(achievement.isUnlocked()).isTrue();
             });
     }
 

@@ -33,18 +33,18 @@ public class SettingsServiceImpl implements SettingsService {
     @Transactional
     public DomainResponses.UserSettingsResponse update(DomainRequests.UserSettingsRequest request) {
         UserSettings settings = findOrCreate(currentUser());
-        if (request.theme() != null) {
-            settings.setTheme(request.theme());
+        if (request.getTheme() != null) {
+            settings.setTheme(request.getTheme());
         }
-        if (request.language() != null && !request.language().isBlank()) {
-            settings.setLanguage(request.language().trim());
+        if (request.getLanguage() != null && !request.getLanguage().isBlank()) {
+            settings.setLanguage(request.getLanguage().trim());
         }
-        if (request.timezone() != null && !request.timezone().isBlank()) {
-            settings.setTimezone(request.timezone().trim());
+        if (request.getTimezone() != null && !request.getTimezone().isBlank()) {
+            settings.setTimezone(request.getTimezone().trim());
         }
-        settings.setNotificationPreferences(request.notificationPreferences() == null
+        settings.setNotificationPreferences(request.getNotificationPreferences() == null
             ? new LinkedHashMap<>()
-            : request.notificationPreferences());
+            : request.getNotificationPreferences());
         return userSettingsMapper.toResponse(userSettingsRepository.save(settings));
     }
 

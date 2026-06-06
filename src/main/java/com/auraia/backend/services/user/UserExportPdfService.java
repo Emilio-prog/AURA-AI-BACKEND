@@ -28,7 +28,7 @@ public class UserExportPdfService {
         try (PDDocument document = new PDDocument(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             PdfWriter writer = new PdfWriter(document);
             writer.title("AURA IA - Exportacion de datos");
-            writer.line("Generado: " + export.exportedAt());
+            writer.line("Generado: " + export.getExportedAt());
             writer.blank();
             profile(writer, export);
             diary(writer, export);
@@ -46,52 +46,52 @@ public class UserExportPdfService {
 
     private void profile(PdfWriter writer, UserResponses.ExportDataResponse export) throws IOException {
         writer.section("Perfil");
-        writer.line("Nombre: " + export.profile().name());
-        writer.line("Email: " + export.profile().email());
-        writer.line("Plan: " + export.profile().plan());
-        writer.line("Email verificado: " + export.profile().emailVerified());
-        if (export.settings() != null) {
-            writer.line("Idioma: " + export.settings().language());
-            writer.line("Zona horaria: " + export.settings().timezone());
-            writer.line("Preferencias de notificacion: " + export.settings().notificationPreferences());
+        writer.line("Nombre: " + export.getProfile().getName());
+        writer.line("Email: " + export.getProfile().getEmail());
+        writer.line("Plan: " + export.getProfile().getPlan());
+        writer.line("Email verificado: " + export.getProfile().isEmailVerified());
+        if (export.getSettings() != null) {
+            writer.line("Idioma: " + export.getSettings().getLanguage());
+            writer.line("Zona horaria: " + export.getSettings().getTimezone());
+            writer.line("Preferencias de notificacion: " + export.getSettings().getNotificationPreferences());
         }
         writer.blank();
     }
 
     private void diary(PdfWriter writer, UserResponses.ExportDataResponse export) throws IOException {
         writer.section("Diario");
-        if (export.diary().isEmpty()) {
+        if (export.getDiary().isEmpty()) {
             writer.line("Sin entradas.");
         }
-        for (DomainResponses.DiaryEntryResponse entry : export.diary()) {
-            writer.line("[" + entry.createdAt() + "] " + fallback(entry.title(), "Entrada"));
-            writer.line("Mood: " + fallback(entry.moodLabel(), "-") + " / " + fallback(entry.moodScore(), "-"));
-            writer.line(entry.content());
-            writer.line("Tags: " + entry.tags());
+        for (DomainResponses.DiaryEntryResponse entry : export.getDiary()) {
+            writer.line("[" + entry.getCreatedAt() + "] " + fallback(entry.getTitle(), "Entrada"));
+            writer.line("Mood: " + fallback(entry.getMoodLabel(), "-") + " / " + fallback(entry.getMoodScore(), "-"));
+            writer.line(entry.getContent());
+            writer.line("Tags: " + entry.getTags());
             writer.blank();
         }
     }
 
     private void moods(PdfWriter writer, UserResponses.ExportDataResponse export) throws IOException {
         writer.section("Mood");
-        if (export.moods().isEmpty()) {
+        if (export.getMoods().isEmpty()) {
             writer.line("Sin registros.");
         }
-        for (DomainResponses.MoodLogResponse mood : export.moods()) {
-            writer.line("[" + mood.loggedAt() + "] antes=" + mood.beforeLevel() + " despues=" + mood.afterLevel());
-            writer.line("Nota: " + fallback(mood.note(), "-"));
+        for (DomainResponses.MoodLogResponse mood : export.getMoods()) {
+            writer.line("[" + mood.getLoggedAt() + "] antes=" + mood.getBeforeLevel() + " despues=" + mood.getAfterLevel());
+            writer.line("Nota: " + fallback(mood.getNote(), "-"));
         }
         writer.blank();
     }
 
     private void chats(PdfWriter writer, UserResponses.ExportDataResponse export) throws IOException {
         writer.section("Chat");
-        if (export.chatSessions().isEmpty()) {
+        if (export.getChatSessions().isEmpty()) {
             writer.line("Sin sesiones.");
         }
-        for (DomainResponses.ChatSessionResponse session : export.chatSessions()) {
-            writer.line("Sesion: " + fallback(session.title(), session.id()) + " [" + session.startedAt() + "]");
-            for (Map<String, Object> message : session.messages()) {
+        for (DomainResponses.ChatSessionResponse session : export.getChatSessions()) {
+            writer.line("Sesion: " + fallback(session.getTitle(), session.getId()) + " [" + session.getStartedAt() + "]");
+            for (Map<String, Object> message : session.getMessages()) {
                 writer.line(fallback(message.get("role"), "mensaje") + ": " + fallback(message.get("content"), ""));
             }
             writer.blank();
@@ -100,26 +100,26 @@ public class UserExportPdfService {
 
     private void contacts(PdfWriter writer, UserResponses.ExportDataResponse export) throws IOException {
         writer.section("Contactos");
-        if (export.contacts().isEmpty()) {
+        if (export.getContacts().isEmpty()) {
             writer.line("Sin contactos.");
         }
-        for (DomainResponses.ContactResponse contact : export.contacts()) {
-            writer.line(contact.name() + " - " + fallback(contact.relationship(), "-") + " - " + contact.phone());
-            writer.line("Disponible: " + contact.available() + " / SOS: " + contact.sosEnabled());
+        for (DomainResponses.ContactResponse contact : export.getContacts()) {
+            writer.line(contact.getName() + " - " + fallback(contact.getRelationship(), "-") + " - " + contact.getPhone());
+            writer.line("Disponible: " + contact.isAvailable() + " / SOS: " + contact.isSosEnabled());
         }
         writer.blank();
     }
 
     private void panic(PdfWriter writer, UserResponses.ExportDataResponse export) throws IOException {
         writer.section("SOS");
-        if (export.panicAlerts().isEmpty()) {
+        if (export.getPanicAlerts().isEmpty()) {
             writer.line("Sin alertas SOS.");
         }
-        for (DomainResponses.PanicAlertResponse alert : export.panicAlerts()) {
-            writer.line("Alerta: " + alert.triggeredAt() + " / resuelta: " + fallback(alert.resolvedAt(), "-"));
-            writer.line("Notas: " + fallback(alert.notes(), "-"));
-            for (DomainResponses.PanicNotificationResponse notification : alert.notifications()) {
-                writer.line(notification.channel() + " " + notification.status() + " -> " + notification.contactName());
+        for (DomainResponses.PanicAlertResponse alert : export.getPanicAlerts()) {
+            writer.line("Alerta: " + alert.getTriggeredAt() + " / resuelta: " + fallback(alert.getResolvedAt(), "-"));
+            writer.line("Notas: " + fallback(alert.getNotes(), "-"));
+            for (DomainResponses.PanicNotificationResponse notification : alert.getNotifications()) {
+                writer.line(notification.getChannel() + " " + notification.getStatus() + " -> " + notification.getContactName());
             }
             writer.blank();
         }

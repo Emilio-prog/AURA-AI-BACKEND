@@ -92,7 +92,7 @@ class GoogleOAuthServiceTest {
 
         AuthResponses.OAuthStartResponse response = service.startLogin();
 
-        assertThat(response.authorizationUrl()).contains("accounts.google.com");
+        assertThat(response.getAuthorizationUrl()).contains("accounts.google.com");
         ArgumentCaptor<String> rawState = ArgumentCaptor.forClass(String.class);
         verify(googleOAuthClient).authorizationUrl(rawState.capture());
         ArgumentCaptor<OAuthState> state = ArgumentCaptor.forClass(OAuthState.class);
@@ -257,7 +257,7 @@ class GoogleOAuthServiceTest {
 
         AuthResponses.AuthResponse response = service.exchange(new AuthRequests.OAuthExchangeRequest("exchange-code"));
 
-        assertThat(response.accessToken()).isEqualTo("access");
+        assertThat(response.getAccessToken()).isEqualTo("access");
         assertThat(exchangeCode.getConsumedAt()).isNotNull();
         verify(exchangeCodeRepository).save(exchangeCode);
     }

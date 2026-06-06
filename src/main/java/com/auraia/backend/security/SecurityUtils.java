@@ -15,6 +15,6 @@ public final class SecurityUtils {
         if (authentication == null || !(authentication.getPrincipal() instanceof UserPrincipal principal)) {
             throw new UnauthorizedException("Authentication required");
         }
-        return principal.id();
+        return principal.getId();
     }
 }

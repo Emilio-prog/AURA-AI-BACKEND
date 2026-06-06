@@ -65,16 +65,16 @@ public class ChatbotServiceImpl implements ChatbotService {
         User user = currentUser();
         ChatSession session = findOwned(id, user);
         List<Map<String, Object>> messages = decryptedMessages(user.getId(), session.getMessages());
-        messages.add(message("user", request.message(), Map.of()));
-        AiChatResponse aiResponse = aiAnalyzerClient.chat(messages, request.message());
-        messages.add(message("assistant", aiResponse.reply(), Map.of(
-            "sentiment", aiResponse.sentiment(),
-            "riskLevel", aiResponse.riskLevel(),
-            "emotions", aiResponse.emotions()
+        messages.add(message("user", request.getMessage(), Map.of()));
+        AiChatResponse aiResponse = aiAnalyzerClient.chat(messages, request.getMessage());
+        messages.add(message("assistant", aiResponse.getReply(), Map.of(
+            "sentiment", aiResponse.getSentiment(),
+            "riskLevel", aiResponse.getRiskLevel(),
+            "emotions", aiResponse.getEmotions()
         )));
         String title = contentCryptoService.decrypt(user.getId(), "chat.title", session.getTitle());
         if ("Nueva sesion".equals(title)) {
-            title = request.message().length() > 60 ? request.message().substring(0, 60) : request.message();
+            title = request.getMessage().length() > 60 ? request.getMessage().substring(0, 60) : request.getMessage();
         }
         session.setTitle(contentCryptoService.encrypt(user.getId(), "chat.title", title));
         session.setMessages(encryptedMessages(user.getId(), messages));

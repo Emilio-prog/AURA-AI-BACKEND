@@ -42,13 +42,13 @@ public class MoodServiceImpl implements MoodService {
     @Transactional
     public DomainResponses.MoodLogResponse create(DomainRequests.MoodLogRequest request) {
         User user = currentUser();
-        String note = blankToNull(request.note());
+        String note = blankToNull(request.getNote());
         MoodLog moodLog = MoodLog.builder()
             .user(user)
-            .beforeLevel(request.beforeLevel())
-            .afterLevel(request.afterLevel())
+            .beforeLevel(request.getBeforeLevel())
+            .afterLevel(request.getAfterLevel())
             .note(contentCryptoService.encrypt(user.getId(), "mood.note", note))
-            .loggedAt(request.loggedAt() == null ? Instant.now() : request.loggedAt())
+            .loggedAt(request.getLoggedAt() == null ? Instant.now() : request.getLoggedAt())
             .build();
         return response(moodLogRepository.save(moodLog), note);
     }
