@@ -11,11 +11,12 @@ import com.auraia.backend.repositories.MoodLogRepository;
 import com.auraia.backend.repositories.UserRepository;
 import com.auraia.backend.security.SecurityUtils;
 import com.auraia.backend.services.privacy.ContentCryptoService;
+import com.auraia.backend.services.push.WebPushService;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
+import java.util.Date;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,93 +28,246 @@ public class MoodServiceImpl implements MoodService {
     private final MoodLogRepository moodLogRepository;
     private final UserRepository userRepository;
     private final ContentCryptoService contentCryptoService;
+    private final WebPushService webPushService;
 
     @Override
     @Transactional
-    public PageResponse<DomainResponses.MoodLogResponse> list(Instant from, Instant to, Pageable pageable) {
-        User user = currentUser();
-        Instant start = from == null ? Instant.EPOCH : from;
-        Instant end = to == null ? Instant.now().plus(1, ChronoUnit.DAYS) : to;
-        return PageResponse.from(moodLogRepository.findByUserAndLoggedAtBetween(user, start, end, pageable)
-            .map(log -> decryptAndProtect(log, user)));
+    public PageResponse<DomainResponses.MoodLogResponse> list(Instant desde, Instant hasta, Pageable paginacion) {
+        User usuario = usuarioActual();
+        Instant fechaInicio = Instant.EPOCH;
+        Instant fechaFin = Instant.now().plusSeconds(24 * 60 * 60);
+
+        if (desde != null) {
+            fechaInicio = desde;
+        }
+        if (hasta != null) {
+            fechaFin = hasta;
+        }
+
+        return PageResponse.from(moodLogRepository.buscarPaginaEntreFechas(usuario, fechaInicio, fechaFin, paginacion)
+            .map(registro -> desencriptarYProteger(registro, usuario)));
     }
 
     @Override
     @Transactional
-    public DomainResponses.MoodLogResponse create(DomainRequests.MoodLogRequest request) {
-        User user = currentUser();
-        String note = blankToNull(request.getNote());
-        MoodLog moodLog = MoodLog.builder()
-            .user(user)
-            .beforeLevel(request.getBeforeLevel())
-            .afterLevel(request.getAfterLevel())
-            .note(contentCryptoService.encrypt(user.getId(), "mood.note", note))
-            .loggedAt(request.getLoggedAt() == null ? Instant.now() : request.getLoggedAt())
+    public DomainResponses.MoodLogResponse create(DomainRequests.MoodLogRequest peticion) {
+        User usuario = usuarioActual();
+        String nota = textoVacioANull(peticion.getNote());
+        Instant fechaRegistro = Instant.now();
+        if (peticion.getLoggedAt() != null) {
+            fechaRegistro = peticion.getLoggedAt();
+        }
+
+        MoodLog registro = MoodLog.builder()
+            .user(usuario)
+            .beforeLevel(peticion.getBeforeLevel())
+            .afterLevel(peticion.getAfterLevel())
+            .note(contentCryptoService.encrypt(usuario.getId(), "mood.note", nota))
+            .loggedAt(fechaRegistro)
             .build();
-        return response(moodLogRepository.save(moodLog), note);
+
+        MoodLog registroGuardado = moodLogRepository.save(registro);
+        avisarSiCaeMucho(usuario, registroGuardado);
+        return crearRespuesta(registroGuardado, nota);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public DomainResponses.MoodStatsResponse stats(Instant from, Instant to) {
-        Instant end = to == null ? Instant.now() : to;
-        Instant start = from == null ? end.minus(7, ChronoUnit.DAYS) : from;
-        List<MoodLog> logs = moodLogRepository.findByUserAndLoggedAtBetweenOrderByLoggedAtAsc(currentUser(), start, end);
-        if (logs.isEmpty()) {
-            return new DomainResponses.MoodStatsResponse(start, end, 0, 0, 0, 0, "stable");
+    public DomainResponses.MoodStatsResponse stats(Instant desde, Instant hasta) {
+        User usuario = usuarioActual();
+        Date fechaFin = new Date();
+        if (hasta != null) {
+            fechaFin = Date.from(hasta);
         }
-        double avgBefore = logs.stream().mapToInt(MoodLog::getBeforeLevel).average().orElse(0);
-        double avgAfter = logs.stream().mapToInt(MoodLog::getAfterLevel).average().orElse(0);
-        double improvement = avgBefore == 0 ? 0 : ((avgAfter - avgBefore) / avgBefore) * 100;
-        String trend = improvement > 5 ? "improving" : improvement < -5 ? "declining" : "stable";
-        return new DomainResponses.MoodStatsResponse(start, end, logs.size(), round(avgBefore), round(avgAfter), round(improvement), trend);
+
+        Date fechaInicio = new Date(fechaFin.getTime() - 7L * 24 * 60 * 60 * 1000);
+        if (desde != null) {
+            fechaInicio = Date.from(desde);
+        }
+
+        MoodLog[] registros = moodLogRepository.buscarEntreFechas(usuario, fechaInicio.toInstant(), fechaFin.toInstant())
+            .toArray(new MoodLog[0]);
+        if (registros.length == 0) {
+            return new DomainResponses.MoodStatsResponse(fechaInicio.toInstant(), fechaFin.toInstant(), 0, 0, 0, 0, "stable",
+                0, 0, 0, false, "estable");
+        }
+
+        double diferenciaTendencia = calcularDiferenciaTendencia(registros);
+        String estado = calcularTendencia(diferenciaTendencia);
+
+        return new DomainResponses.MoodStatsResponse(
+            fechaInicio.toInstant(),
+            fechaFin.toInstant(),
+            registros.length,
+            redondear(mediaAntes(registros)),
+            redondear(mediaDespues(registros)),
+            redondear(calcularMejora(registros)),
+            estadoAnterior(estado),
+            redondear(calcularMediaAnterior(registros)),
+            redondear(calcularMediaReciente(registros)),
+            redondear(diferenciaTendencia),
+            hayCaidaFuerte(registros),
+            estado
+        );
     }
 
     @Override
     @Transactional
     public AuthResponses.MessageResponse delete(UUID id) {
-        MoodLog moodLog = moodLogRepository.findByIdAndUser(id, currentUser())
-            .orElseThrow(() -> new ResourceNotFoundException("Mood log not found"));
-        moodLogRepository.delete(moodLog);
+        User usuario = usuarioActual();
+        MoodLog registro = moodLogRepository.buscarPorIdYUsuario(id, usuario);
+        if (registro == null) {
+            throw new ResourceNotFoundException("Mood log not found");
+        }
+        moodLogRepository.delete(registro);
         return new AuthResponses.MessageResponse("OK");
     }
 
-    private User currentUser() {
+    private User usuarioActual() {
         return userRepository.findByIdAndDeletedAtIsNull(SecurityUtils.currentUserId())
             .orElseThrow(() -> new ResourceNotFoundException("User not found"));
     }
 
-    private String blankToNull(String value) {
-        return value == null || value.isBlank() ? null : value.trim();
+    private String textoVacioANull(String valor) {
+        return valor == null || valor.isBlank() ? null : valor.trim();
     }
 
-    private double round(double value) {
-        return Math.round(value * 100.0) / 100.0;
+    private double redondear(double valor) {
+        return Math.round(valor * 100.0) / 100.0;
     }
 
-    private DomainResponses.MoodLogResponse decryptAndProtect(MoodLog moodLog, User user) {
-        String note = contentCryptoService.decrypt(user.getId(), "mood.note", moodLog.getNote());
+    private void avisarSiCaeMucho(User usuario, MoodLog registro) {
+        MoodLog[] registrosAnteriores = moodLogRepository.buscarAnteriores(
+            usuario,
+            registro.getLoggedAt(),
+            PageRequest.of(0, 3)
+        ).toArray(new MoodLog[0]);
+
+        if (registrosAnteriores.length < 3) {
+            return;
+        }
+
+        double mediaAnterior = mediaDespues(registrosAnteriores);
+        if (registro.getAfterLevel() >= mediaAnterior + 3) {
+            webPushService.enviarAlertaCaidaAnimo(usuario, registro, redondear(mediaAnterior));
+        }
+    }
+
+    private double calcularMediaAnterior(MoodLog[] registros) {
+        if (registros.length < 2) {
+            return mediaDespues(registros);
+        }
+
+        int mitad = registros.length / 2;
+        return mediaDespues(registros, 0, mitad);
+    }
+
+    private double calcularMediaReciente(MoodLog[] registros) {
+        if (registros.length < 2) {
+            return mediaDespues(registros);
+        }
+
+        int mitad = registros.length / 2;
+        return mediaDespues(registros, mitad, registros.length);
+    }
+
+    private double calcularMejora(MoodLog[] registros) {
+        double antes = mediaAntes(registros);
+        double despues = mediaDespues(registros);
+
+        if (antes == 0) {
+            return 0;
+        }
+
+        return ((antes - despues) / antes) * 100;
+    }
+
+    private double calcularDiferenciaTendencia(MoodLog[] registros) {
+        return calcularMediaReciente(registros) - calcularMediaAnterior(registros);
+    }
+
+    private double mediaAntes(MoodLog[] registros) {
+        if (registros.length == 0) {
+            return 0;
+        }
+
+        double suma = 0;
+        for (MoodLog registro : registros) {
+            suma = suma + registro.getBeforeLevel();
+        }
+        return suma / registros.length;
+    }
+
+    private double mediaDespues(MoodLog[] registros) {
+        return mediaDespues(registros, 0, registros.length);
+    }
+
+    private double mediaDespues(MoodLog[] registros, int inicio, int fin) {
+        if (fin <= inicio) {
+            return 0;
+        }
+
+        double suma = 0;
+        for (int i = inicio; i < fin; i++) {
+            suma = suma + registros[i].getAfterLevel();
+        }
+        return suma / (fin - inicio);
+    }
+
+    private String calcularTendencia(double diferenciaTendencia) {
+        if (diferenciaTendencia <= -1) {
+            return "mejorando";
+        }
+        if (diferenciaTendencia >= 1) {
+            return "empeorando";
+        }
+        return "estable";
+    }
+
+    private String estadoAnterior(String estado) {
+        if ("mejorando".equals(estado)) {
+            return "improving";
+        }
+        if ("empeorando".equals(estado)) {
+            return "declining";
+        }
+        return "stable";
+    }
+
+    private boolean hayCaidaFuerte(MoodLog[] registros) {
+        if (registros.length < 4) {
+            return false;
+        }
+
+        MoodLog ultimo = registros[registros.length - 1];
+        double mediaAnterior = mediaDespues(registros, registros.length - 4, registros.length - 1);
+        return ultimo.getAfterLevel() >= mediaAnterior + 3;
+    }
+
+    private DomainResponses.MoodLogResponse desencriptarYProteger(MoodLog registro, User usuario) {
+        String nota = contentCryptoService.decrypt(usuario.getId(), "mood.note", registro.getNote());
         if (contentCryptoService.isEnabled()) {
-            String encryptedNote = moodLog.getNote() != null && !contentCryptoService.isEncrypted(moodLog.getNote())
-                ? contentCryptoService.encrypt(user.getId(), "mood.note", note)
-                : moodLog.getNote();
-            if (!java.util.Objects.equals(moodLog.getNote(), encryptedNote)) {
-                moodLog.setNote(encryptedNote);
-                moodLogRepository.save(moodLog);
+            String notaCifrada = registro.getNote();
+            if (registro.getNote() != null && !contentCryptoService.isEncrypted(registro.getNote())) {
+                notaCifrada = contentCryptoService.encrypt(usuario.getId(), "mood.note", nota);
+            }
+            if (!java.util.Objects.equals(registro.getNote(), notaCifrada)) {
+                registro.setNote(notaCifrada);
+                moodLogRepository.save(registro);
             }
         }
-        return response(moodLog, note);
+        return crearRespuesta(registro, nota);
     }
 
-    private DomainResponses.MoodLogResponse response(MoodLog moodLog, String note) {
+    private DomainResponses.MoodLogResponse crearRespuesta(MoodLog registro, String nota) {
         return new DomainResponses.MoodLogResponse(
-            moodLog.getId(),
-            moodLog.getBeforeLevel(),
-            moodLog.getAfterLevel(),
-            note,
-            moodLog.getLoggedAt(),
-            moodLog.getCreatedAt(),
-            moodLog.getUpdatedAt()
+            registro.getId(),
+            registro.getBeforeLevel(),
+            registro.getAfterLevel(),
+            nota,
+            registro.getLoggedAt(),
+            registro.getCreatedAt(),
+            registro.getUpdatedAt()
         );
     }
 }

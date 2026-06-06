@@ -5,6 +5,7 @@ import com.auraia.backend.exceptions.BusinessException;
 import com.auraia.backend.exceptions.ResourceNotFoundException;
 import com.auraia.backend.models.dto.request.PushRequests;
 import com.auraia.backend.models.dto.response.PushResponses;
+import com.auraia.backend.models.entities.MoodLog;
 import com.auraia.backend.models.entities.User;
 import com.auraia.backend.models.entities.UserAchievement;
 import com.auraia.backend.models.entities.UserSettings;
@@ -157,6 +158,31 @@ public class WebPushServiceImpl implements WebPushService {
             sendDiaryReminderIfDue(user, zone, now);
             sendAchievementNotifications(user);
         }
+    }
+
+    @Override
+    @Transactional
+    public void enviarAlertaCaidaAnimo(User usuario, MoodLog registro, double mediaAnterior) {
+        if (!properties.getWebPush().isEnabled()) {
+            return;
+        }
+        UserSettings settings = settingsFor(usuario);
+        Map<String, Object> preferencias = settings.getNotificationPreferences();
+        if (!notificationsEnabled(preferencias) || !booleanPreference(preferencias, "moodReminderEnabled", true)) {
+            return;
+        }
+
+        String mediaTexto = String.valueOf(Math.round(mediaAnterior * 10.0) / 10.0);
+        WebPushPayload payload = new WebPushPayload(
+            WebPushNotificationType.MOOD_DROP_ALERT,
+            "AURA IA",
+            "Tu ansiedad ha subido bastante respecto a tu media reciente (" + mediaTexto + "/10).",
+            "/#/dashboard/mood"
+        );
+        String claveObjetivo = registro.getId() == null
+            ? "mood-drop:" + registro.getLoggedAt().toEpochMilli()
+            : "mood-drop:" + registro.getId();
+        sendToActiveSubscriptions(usuario, WebPushNotificationType.MOOD_DROP_ALERT, claveObjetivo, payload);
     }
 
     private void sendMoodReminderIfDue(User user, Map<String, Object> preferences, ZoneId zone, Instant now) {

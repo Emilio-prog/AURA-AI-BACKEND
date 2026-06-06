@@ -191,12 +191,25 @@ public final class DomainResponses {
         private double averageAfter;
         private double improvementPercentage;
         private String trend;
+        private double mediaAnterior;
+        private double mediaReciente;
+        private double diferenciaTendencia;
+        private boolean alertaCaida;
+        private String tendencia;
 
         public MoodStatsResponse() {
         }
 
         public MoodStatsResponse(Instant from, Instant to, long count, double averageBefore,
                                  double averageAfter, double improvementPercentage, String trend) {
+            this(from, to, count, averageBefore, averageAfter, improvementPercentage, trend,
+                0, 0, 0, false, trend);
+        }
+
+        public MoodStatsResponse(Instant from, Instant to, long count, double averageBefore,
+                                 double averageAfter, double improvementPercentage, String trend,
+                                 double mediaAnterior, double mediaReciente, double diferenciaTendencia,
+                                 boolean alertaCaida, String tendencia) {
             this.from = from;
             this.to = to;
             this.count = count;
@@ -204,6 +217,11 @@ public final class DomainResponses {
             this.averageAfter = averageAfter;
             this.improvementPercentage = improvementPercentage;
             this.trend = trend;
+            this.mediaAnterior = mediaAnterior;
+            this.mediaReciente = mediaReciente;
+            this.diferenciaTendencia = diferenciaTendencia;
+            this.alertaCaida = alertaCaida;
+            this.tendencia = tendencia;
         }
 
         public Instant getFrom() {
@@ -260,6 +278,46 @@ public final class DomainResponses {
 
         public void setTrend(String trend) {
             this.trend = trend;
+        }
+
+        public double getMediaAnterior() {
+            return mediaAnterior;
+        }
+
+        public void setMediaAnterior(double mediaAnterior) {
+            this.mediaAnterior = mediaAnterior;
+        }
+
+        public double getMediaReciente() {
+            return mediaReciente;
+        }
+
+        public void setMediaReciente(double mediaReciente) {
+            this.mediaReciente = mediaReciente;
+        }
+
+        public double getDiferenciaTendencia() {
+            return diferenciaTendencia;
+        }
+
+        public void setDiferenciaTendencia(double diferenciaTendencia) {
+            this.diferenciaTendencia = diferenciaTendencia;
+        }
+
+        public boolean isAlertaCaida() {
+            return alertaCaida;
+        }
+
+        public void setAlertaCaida(boolean alertaCaida) {
+            this.alertaCaida = alertaCaida;
+        }
+
+        public String getTendencia() {
+            return tendencia;
+        }
+
+        public void setTendencia(String tendencia) {
+            this.tendencia = tendencia;
         }
     }
 

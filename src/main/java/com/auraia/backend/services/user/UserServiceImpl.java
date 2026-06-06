@@ -164,7 +164,7 @@ public class UserServiceImpl implements UserService {
             userMapper.toResponse(user),
             userSettingsRepository.findByUser(user).map(userSettingsMapper::toResponse).orElse(null),
             diaryEntryRepository.findByUser(user, org.springframework.data.domain.Pageable.unpaged()).map(entry -> diaryResponse(entry, user)).getContent(),
-            moodLogRepository.findByUserAndLoggedAtBetween(user, Instant.EPOCH, Instant.now().plusSeconds(315360000), org.springframework.data.domain.Pageable.unpaged()).map(log -> moodResponse(log, user)).getContent(),
+            moodLogRepository.buscarPaginaEntreFechas(user, Instant.EPOCH, Instant.now().plusSeconds(315360000), org.springframework.data.domain.Pageable.unpaged()).map(log -> moodResponse(log, user)).getContent(),
             chatSessionRepository.findByUser(user, org.springframework.data.domain.Pageable.unpaged())
                 .map(session -> chatResponse(session, user))
                 .getContent(),
