@@ -111,11 +111,12 @@ public class UserServiceImpl implements UserService {
 
         validateOnboarding(request);
 
+        String nombre = nombreOnboarding(request);
         String language = request.getLanguage().trim().toLowerCase(Locale.ROOT);
         String timezone = request.getTimezone().trim();
         Instant now = Instant.now();
 
-        user.setName(request.getPreferredName().trim());
+        user.setName(nombre);
         user.setOnboardedAt(now);
         user.setOnboardingConsentAt(now);
         user.setOnboardingConsentVersion(ONBOARDING_CONSENT_VERSION);
@@ -261,6 +262,17 @@ public class UserServiceImpl implements UserService {
             throw new BusinessException("error.unsupported_language");
         }
         validateTrustedContact(request.getTrustedContact());
+    }
+
+    private String nombreOnboarding(UserRequests.CompleteOnboardingRequest request) {
+        if (!hasText(request.getPreferredName())) {
+            throw new BusinessException("El nombre no puede estar vacio");
+        }
+        if (request.getPreferredName().trim().length() < 2 || request.getPreferredName().trim().length() > 160) {
+            throw new BusinessException("El nombre tiene una longitud incorrecta");
+        }
+
+        return request.getPreferredName().trim();
     }
 
     private void validateTrustedContact(UserRequests.TrustedContactRequest contact) {

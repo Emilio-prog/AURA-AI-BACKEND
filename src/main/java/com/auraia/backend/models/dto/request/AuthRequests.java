@@ -9,18 +9,41 @@ public final class AuthRequests {
     private AuthRequests() {
     }
 
+    private static void validarTextoObligatorio(String valor, String campo) {
+        if (valor == null || valor.isBlank()) {
+            throw new IllegalArgumentException(campo + " no puede estar vacio");
+        }
+    }
+
+    private static void validarLongitud(String valor, String campo, int minimo, int maximo) {
+        if (valor == null) {
+            return;
+        }
+        if (valor.length() < minimo || valor.length() > maximo) {
+            throw new IllegalArgumentException(campo + " tiene una longitud incorrecta");
+        }
+    }
+
+    private static void validarEmail(String email) {
+        validarTextoObligatorio(email, "email");
+        validarLongitud(email, "email", 1, 320);
+        if (!email.contains("@")) {
+            throw new IllegalArgumentException("email no tiene un formato valido");
+        }
+    }
+
     public static class RegisterRequest {
-        @NotBlank
-        @Size(min = 2, max = 160)
+        @NotBlank(message = "name no puede estar vacio")
+        @Size(min = 2, max = 160, message = "name tiene una longitud incorrecta")
         private String name;
 
-        @NotBlank
-        @Email
-        @Size(max = 320)
+        @NotBlank(message = "email no puede estar vacio")
+        @Email(message = "email no tiene un formato valido")
+        @Size(max = 320, message = "email tiene una longitud incorrecta")
         private String email;
 
-        @NotBlank
-        @Size(min = 12, max = 128)
+        @NotBlank(message = "password no puede estar vacio")
+        @Size(min = 12, max = 128, message = "password tiene una longitud incorrecta")
         private String password;
 
         private String captchaToken;
@@ -33,6 +56,11 @@ public final class AuthRequests {
             this.email = email;
             this.password = password;
             this.captchaToken = captchaToken;
+            validarTextoObligatorio(this.name, "name");
+            validarLongitud(this.name, "name", 2, 160);
+            validarEmail(this.email);
+            validarTextoObligatorio(this.password, "password");
+            validarLongitud(this.password, "password", 12, 128);
         }
 
         public String getName() {
@@ -69,12 +97,12 @@ public final class AuthRequests {
     }
 
     public static class LoginRequest {
-        @NotBlank
-        @Email
-        @Size(max = 320)
+        @NotBlank(message = "email no puede estar vacio")
+        @Email(message = "email no tiene un formato valido")
+        @Size(max = 320, message = "email tiene una longitud incorrecta")
         private String email;
 
-        @NotBlank
+        @NotBlank(message = "password no puede estar vacio")
         private String password;
 
         public LoginRequest() {
@@ -83,6 +111,8 @@ public final class AuthRequests {
         public LoginRequest(String email, String password) {
             this.email = email;
             this.password = password;
+            validarEmail(this.email);
+            validarTextoObligatorio(this.password, "password");
         }
 
         public String getEmail() {
@@ -103,7 +133,7 @@ public final class AuthRequests {
     }
 
     public static class RefreshTokenRequest {
-        @NotBlank
+        @NotBlank(message = "refreshToken no puede estar vacio")
         private String refreshToken;
 
         public RefreshTokenRequest() {
@@ -111,6 +141,7 @@ public final class AuthRequests {
 
         public RefreshTokenRequest(String refreshToken) {
             this.refreshToken = refreshToken;
+            validarTextoObligatorio(this.refreshToken, "refreshToken");
         }
 
         public String getRefreshToken() {
@@ -123,7 +154,7 @@ public final class AuthRequests {
     }
 
     public static class LogoutRequest {
-        @NotBlank
+        @NotBlank(message = "refreshToken no puede estar vacio")
         private String refreshToken;
 
         public LogoutRequest() {
@@ -131,6 +162,7 @@ public final class AuthRequests {
 
         public LogoutRequest(String refreshToken) {
             this.refreshToken = refreshToken;
+            validarTextoObligatorio(this.refreshToken, "refreshToken");
         }
 
         public String getRefreshToken() {
@@ -143,9 +175,9 @@ public final class AuthRequests {
     }
 
     public static class ResendVerificationRequest {
-        @NotBlank
-        @Email
-        @Size(max = 320)
+        @NotBlank(message = "email no puede estar vacio")
+        @Email(message = "email no tiene un formato valido")
+        @Size(max = 320, message = "email tiene una longitud incorrecta")
         private String email;
 
         public ResendVerificationRequest() {
@@ -153,6 +185,7 @@ public final class AuthRequests {
 
         public ResendVerificationRequest(String email) {
             this.email = email;
+            validarEmail(this.email);
         }
 
         public String getEmail() {
@@ -165,9 +198,9 @@ public final class AuthRequests {
     }
 
     public static class ForgotPasswordRequest {
-        @NotBlank
-        @Email
-        @Size(max = 320)
+        @NotBlank(message = "email no puede estar vacio")
+        @Email(message = "email no tiene un formato valido")
+        @Size(max = 320, message = "email tiene una longitud incorrecta")
         private String email;
 
         private String captchaToken;
@@ -178,6 +211,7 @@ public final class AuthRequests {
         public ForgotPasswordRequest(String email, String captchaToken) {
             this.email = email;
             this.captchaToken = captchaToken;
+            validarEmail(this.email);
         }
 
         public String getEmail() {
@@ -198,11 +232,11 @@ public final class AuthRequests {
     }
 
     public static class ResetPasswordRequest {
-        @NotBlank
+        @NotBlank(message = "token no puede estar vacio")
         private String token;
 
-        @NotBlank
-        @Size(min = 12, max = 128)
+        @NotBlank(message = "password no puede estar vacio")
+        @Size(min = 12, max = 128, message = "password tiene una longitud incorrecta")
         private String password;
 
         public ResetPasswordRequest() {
@@ -211,6 +245,9 @@ public final class AuthRequests {
         public ResetPasswordRequest(String token, String password) {
             this.token = token;
             this.password = password;
+            validarTextoObligatorio(this.token, "token");
+            validarTextoObligatorio(this.password, "password");
+            validarLongitud(this.password, "password", 12, 128);
         }
 
         public String getToken() {
@@ -231,7 +268,7 @@ public final class AuthRequests {
     }
 
     public static class OAuthExchangeRequest {
-        @NotBlank
+        @NotBlank(message = "code no puede estar vacio")
         private String code;
 
         public OAuthExchangeRequest() {
@@ -239,6 +276,7 @@ public final class AuthRequests {
 
         public OAuthExchangeRequest(String code) {
             this.code = code;
+            validarTextoObligatorio(this.code, "code");
         }
 
         public String getCode() {

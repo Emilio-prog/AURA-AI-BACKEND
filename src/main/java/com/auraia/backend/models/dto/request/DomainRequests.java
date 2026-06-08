@@ -16,22 +16,34 @@ public final class DomainRequests {
     private DomainRequests() {
     }
 
+    private static void validarTextoObligatorio(String valor, String campo) {
+        if (valor == null || valor.isBlank()) {
+            throw new IllegalArgumentException(campo + " no puede estar vacio");
+        }
+    }
+
+    private static void validarLongitud(String valor, String campo, int maximo) {
+        if (valor != null && valor.length() > maximo) {
+            throw new IllegalArgumentException(campo + " es demasiado largo");
+        }
+    }
+
     public static class DiaryEntryRequest {
-        @Size(max = 180)
+        @Size(max = 180, message = "title es demasiado largo")
         private String title;
 
-        @NotBlank
-        @Size(max = 20000)
+        @NotBlank(message = "content no puede estar vacio")
+        @Size(max = 20000, message = "content es demasiado largo")
         private String content;
 
-        @Min(1)
-        @Max(10)
+        @Min(value = 1, message = "moodScore esta fuera del rango permitido")
+        @Max(value = 10, message = "moodScore esta fuera del rango permitido")
         private Integer moodScore;
 
-        @Size(max = 80)
+        @Size(max = 80, message = "moodLabel es demasiado largo")
         private String moodLabel;
 
-        private List<@Size(min = 0, max = 80) String> tags;
+        private List<@Size(min = 0, max = 80, message = "tags tiene una longitud incorrecta") String> tags;
 
         public DiaryEntryRequest() {
         }
@@ -42,6 +54,10 @@ public final class DomainRequests {
             this.moodScore = moodScore;
             this.moodLabel = moodLabel;
             this.tags = tags;
+            validarLongitud(this.title, "title", 180);
+            validarTextoObligatorio(this.content, "content");
+            validarLongitud(this.content, "content", 20000);
+            validarLongitud(this.moodLabel, "moodLabel", 80);
         }
 
         public String getTitle() {
@@ -86,15 +102,15 @@ public final class DomainRequests {
     }
 
     public static class MoodLogRequest {
-        @Min(1)
-        @Max(10)
+        @Min(value = 1, message = "beforeLevel esta fuera del rango permitido")
+        @Max(value = 10, message = "beforeLevel esta fuera del rango permitido")
         private int beforeLevel;
 
-        @Min(1)
-        @Max(10)
+        @Min(value = 1, message = "afterLevel esta fuera del rango permitido")
+        @Max(value = 10, message = "afterLevel esta fuera del rango permitido")
         private int afterLevel;
 
-        @Size(max = 2000)
+        @Size(max = 2000, message = "note es demasiado largo")
         private String note;
 
         private Instant loggedAt;
@@ -107,6 +123,7 @@ public final class DomainRequests {
             this.afterLevel = afterLevel;
             this.note = note;
             this.loggedAt = loggedAt;
+            validarLongitud(this.note, "note", 2000);
         }
 
         public int getBeforeLevel() {
@@ -143,8 +160,8 @@ public final class DomainRequests {
     }
 
     public static class ChatMessageRequest {
-        @NotBlank
-        @Size(max = 8000)
+        @NotBlank(message = "message no puede estar vacio")
+        @Size(max = 8000, message = "message es demasiado largo")
         private String message;
 
         public ChatMessageRequest() {
@@ -152,6 +169,8 @@ public final class DomainRequests {
 
         public ChatMessageRequest(String message) {
             this.message = message;
+            validarTextoObligatorio(this.message, "message");
+            validarLongitud(this.message, "message", 8000);
         }
 
         public String getMessage() {
@@ -164,19 +183,19 @@ public final class DomainRequests {
     }
 
     public static class ContactRequest {
-        @NotBlank
-        @Size(max = 160)
+        @NotBlank(message = "name no puede estar vacio")
+        @Size(max = 160, message = "name es demasiado largo")
         private String name;
 
-        @NotBlank
-        @Size(max = 40)
+        @NotBlank(message = "phone no puede estar vacio")
+        @Size(max = 40, message = "phone es demasiado largo")
         private String phone;
 
-        @Size(max = 80)
+        @Size(max = 80, message = "relationship es demasiado largo")
         private String relationship;
 
-        @Min(1)
-        @Max(99)
+        @Min(value = 1, message = "priority esta fuera del rango permitido")
+        @Max(value = 99, message = "priority esta fuera del rango permitido")
         private Integer priority;
 
         private Boolean available;
@@ -192,6 +211,11 @@ public final class DomainRequests {
             this.priority = priority;
             this.available = available;
             this.sosEnabled = sosEnabled;
+            validarTextoObligatorio(this.name, "name");
+            validarLongitud(this.name, "name", 160);
+            validarTextoObligatorio(this.phone, "phone");
+            validarLongitud(this.phone, "phone", 40);
+            validarLongitud(this.relationship, "relationship", 80);
         }
 
         public String getName() {
@@ -244,7 +268,7 @@ public final class DomainRequests {
     }
 
     public static class PanicTriggerRequest {
-        @Size(max = 3000)
+        @Size(max = 3000, message = "notes es demasiado largo")
         private String notes;
 
         private UUID contactId;
@@ -257,6 +281,7 @@ public final class DomainRequests {
             this.notes = notes;
             this.contactId = contactId;
             this.contextJson = contextJson;
+            validarLongitud(this.notes, "notes", 3000);
         }
 
         public String getNotes() {
@@ -285,7 +310,7 @@ public final class DomainRequests {
     }
 
     public static class PanicResolveRequest {
-        @Size(max = 3000)
+        @Size(max = 3000, message = "notes es demasiado largo")
         private String notes;
 
         public PanicResolveRequest() {
@@ -293,6 +318,7 @@ public final class DomainRequests {
 
         public PanicResolveRequest(String notes) {
             this.notes = notes;
+            validarLongitud(this.notes, "notes", 3000);
         }
 
         public String getNotes() {
@@ -307,13 +333,13 @@ public final class DomainRequests {
     public static class UserSettingsRequest {
         private Theme theme;
 
-        @Size(min = 2, max = 16)
+        @Size(min = 2, max = 16, message = "language tiene una longitud incorrecta")
         private String language;
 
-        @Size(min = 2, max = 64)
+        @Size(min = 2, max = 64, message = "timezone tiene una longitud incorrecta")
         private String timezone;
 
-        @NotNull
+        @NotNull(message = "notificationPreferences no puede estar vacio")
         private Map<String, Object> notificationPreferences;
 
         public UserSettingsRequest() {

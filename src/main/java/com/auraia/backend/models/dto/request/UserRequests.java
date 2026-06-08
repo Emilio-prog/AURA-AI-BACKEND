@@ -15,12 +15,42 @@ public final class UserRequests {
     private UserRequests() {
     }
 
+    private static void validarTextoObligatorio(String valor, String campo) {
+        if (valor == null || valor.isBlank()) {
+            throw new IllegalArgumentException(campo + " no puede estar vacio");
+        }
+    }
+
+    private static void validarTextoOpcional(String valor, String campo, int minimo, int maximo) {
+        if (valor == null) {
+            return;
+        }
+        if (valor.isBlank()) {
+            throw new IllegalArgumentException(campo + " no puede estar vacio");
+        }
+        if (valor.length() < minimo || valor.length() > maximo) {
+            throw new IllegalArgumentException(campo + " tiene una longitud incorrecta");
+        }
+    }
+
+    private static void validarLongitud(String valor, String campo, int maximo) {
+        if (valor != null && valor.length() > maximo) {
+            throw new IllegalArgumentException(campo + " es demasiado largo");
+        }
+    }
+
+    private static void validarEmail(String email) {
+        if (email != null && !email.contains("@")) {
+            throw new IllegalArgumentException("email no tiene un formato valido");
+        }
+    }
+
     public static class UpdateUserRequest {
-        @Size(min = 2, max = 160)
+        @Size(min = 2, max = 160, message = "name tiene una longitud incorrecta")
         private String name;
 
-        @Email
-        @Size(max = 320)
+        @Email(message = "email no tiene un formato valido")
+        @Size(max = 320, message = "email es demasiado largo")
         private String email;
 
         public UpdateUserRequest() {
@@ -29,6 +59,9 @@ public final class UserRequests {
         public UpdateUserRequest(String name, String email) {
             this.name = name;
             this.email = email;
+            validarTextoOpcional(this.name, "name", 2, 160);
+            validarLongitud(this.email, "email", 320);
+            validarEmail(this.email);
         }
 
         public String getName() {
@@ -49,11 +82,11 @@ public final class UserRequests {
     }
 
     public static class ChangePasswordRequest {
-        @NotBlank
+        @NotBlank(message = "currentPassword no puede estar vacio")
         private String currentPassword;
 
-        @NotBlank
-        @Size(min = 12, max = 128)
+        @NotBlank(message = "newPassword no puede estar vacio")
+        @Size(min = 12, max = 128, message = "newPassword tiene una longitud incorrecta")
         private String newPassword;
 
         public ChangePasswordRequest() {
@@ -62,6 +95,9 @@ public final class UserRequests {
         public ChangePasswordRequest(String currentPassword, String newPassword) {
             this.currentPassword = currentPassword;
             this.newPassword = newPassword;
+            validarTextoObligatorio(this.currentPassword, "currentPassword");
+            validarTextoObligatorio(this.newPassword, "newPassword");
+            validarTextoOpcional(this.newPassword, "newPassword", 12, 128);
         }
 
         public String getCurrentPassword() {
@@ -82,8 +118,8 @@ public final class UserRequests {
     }
 
     public static class DeleteAccountRequest {
-        @NotBlank
-        @Size(max = 80)
+        @NotBlank(message = "confirmationText no puede estar vacio")
+        @Size(max = 80, message = "confirmationText es demasiado largo")
         private String confirmationText;
 
         public DeleteAccountRequest() {
@@ -91,6 +127,8 @@ public final class UserRequests {
 
         public DeleteAccountRequest(String confirmationText) {
             this.confirmationText = confirmationText;
+            validarTextoObligatorio(this.confirmationText, "confirmationText");
+            validarLongitud(this.confirmationText, "confirmationText", 80);
         }
 
         public String getConfirmationText() {
@@ -103,41 +141,40 @@ public final class UserRequests {
     }
 
     public static class CompleteOnboardingRequest {
-        @NotBlank
-        @Size(min = 2, max = 160)
+        @NotBlank(message = "El nombre no puede estar vacio")
         private String preferredName;
 
-        @NotBlank
-        @Size(min = 2, max = 16)
+        @NotBlank(message = "language no puede estar vacio")
+        @Size(min = 2, max = 16, message = "language tiene una longitud incorrecta")
         private String language;
 
-        @NotBlank
-        @Size(min = 2, max = 64)
+        @NotBlank(message = "timezone no puede estar vacio")
+        @Size(min = 2, max = 64, message = "timezone tiene una longitud incorrecta")
         private String timezone;
 
-        @NotNull
+        @NotNull(message = "privacyAccepted no puede ser nulo")
         private Boolean privacyAccepted;
 
-        @NotNull
+        @NotNull(message = "termsAccepted no puede ser nulo")
         private Boolean termsAccepted;
 
-        @NotNull
+        @NotNull(message = "supportOnlyAccepted no puede ser nulo")
         private Boolean supportOnlyAccepted;
 
-        @NotNull
+        @NotNull(message = "ageConfirmed no puede ser nulo")
         private Boolean ageConfirmed;
 
-        @Size(max = 12)
-        private List<@Size(max = 40) String> goals;
+        @Size(max = 12, message = "goals tiene demasiados elementos")
+        private List<@Size(max = 40, message = "goals tiene una longitud incorrecta") String> goals;
 
-        @Size(max = 12)
-        private List<@Size(max = 40) String> anxietyTriggers;
+        @Size(max = 12, message = "anxietyTriggers tiene demasiados elementos")
+        private List<@Size(max = 40, message = "anxietyTriggers tiene una longitud incorrecta") String> anxietyTriggers;
 
         @Valid
         private CurrentMoodRequest currentMood;
 
-        @Size(max = 12)
-        private List<@Size(max = 40) String> toolPreferences;
+        @Size(max = 12, message = "toolPreferences tiene demasiados elementos")
+        private List<@Size(max = 40, message = "toolPreferences tiene una longitud incorrecta") String> toolPreferences;
 
         private Map<String, Object> notifications;
 
@@ -166,6 +203,12 @@ public final class UserRequests {
             this.toolPreferences = toolPreferences;
             this.notifications = notifications;
             this.trustedContact = trustedContact;
+            validarTextoObligatorio(this.preferredName, "preferredName");
+            validarTextoOpcional(this.preferredName, "preferredName", 2, 160);
+            validarTextoObligatorio(this.language, "language");
+            validarTextoOpcional(this.language, "language", 2, 16);
+            validarTextoObligatorio(this.timezone, "timezone");
+            validarTextoOpcional(this.timezone, "timezone", 2, 64);
         }
 
         public String getPreferredName() {
@@ -274,12 +317,12 @@ public final class UserRequests {
     }
 
     public static class CurrentMoodRequest {
-        @NotBlank
-        @Size(max = 80)
+        @NotBlank(message = "label no puede estar vacio")
+        @Size(max = 80, message = "label es demasiado largo")
         private String label;
 
-        @Min(1)
-        @Max(10)
+        @Min(value = 1, message = "intensity esta fuera del rango permitido")
+        @Max(value = 10, message = "intensity esta fuera del rango permitido")
         private int intensity;
 
         public CurrentMoodRequest() {
@@ -288,6 +331,8 @@ public final class UserRequests {
         public CurrentMoodRequest(String label, int intensity) {
             this.label = label;
             this.intensity = intensity;
+            validarTextoObligatorio(this.label, "label");
+            validarLongitud(this.label, "label", 80);
         }
 
         public String getLabel() {
@@ -308,13 +353,13 @@ public final class UserRequests {
     }
 
     public static class TrustedContactRequest {
-        @Size(max = 160)
+        @Size(max = 160, message = "name es demasiado largo")
         private String name;
 
-        @Size(max = 40)
+        @Size(max = 40, message = "phone es demasiado largo")
         private String phone;
 
-        @Size(max = 80)
+        @Size(max = 80, message = "relationship es demasiado largo")
         private String relationship;
 
         public TrustedContactRequest() {
@@ -324,6 +369,9 @@ public final class UserRequests {
             this.name = name;
             this.phone = phone;
             this.relationship = relationship;
+            validarLongitud(this.name, "name", 160);
+            validarLongitud(this.phone, "phone", 40);
+            validarLongitud(this.relationship, "relationship", 80);
         }
 
         public String getName() {

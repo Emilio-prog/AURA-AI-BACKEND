@@ -8,6 +8,12 @@ public final class AdminRequests {
     private AdminRequests() {
     }
 
+    private static void validarUnCampo(Role role, Plan plan, Boolean emailVerified) {
+        if (role == null && plan == null && emailVerified == null) {
+            throw new IllegalArgumentException("Debe indicarse algun dato para actualizar");
+        }
+    }
+
     public static class AdminUpdateUserRequest {
         private Role role;
         private Plan plan;
@@ -20,6 +26,7 @@ public final class AdminRequests {
             this.role = role;
             this.plan = plan;
             this.emailVerified = emailVerified;
+            validarUnCampo(this.role, this.plan, this.emailVerified);
         }
 
         public Role getRole() {
