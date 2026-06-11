@@ -7,6 +7,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Respuestas que devuelve el backend para las pantallas principales.
+ * Son objetos simples que el frontend usa para pintar datos.
+ */
 public final class DomainResponses {
 
     private DomainResponses() {

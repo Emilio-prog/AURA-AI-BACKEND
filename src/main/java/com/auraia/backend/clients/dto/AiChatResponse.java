@@ -3,6 +3,10 @@ package com.auraia.backend.clients.dto;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Respuesta que devuelve despues de una conversacion.
+ * Incluye el texto de respuesta y datos sencillos sobre el estado emocional.
+ */
 public class AiChatResponse {
     private String reply;
     private String sentiment;
@@ -12,6 +16,9 @@ public class AiChatResponse {
     public AiChatResponse() {
     }
 
+    /**
+     * Crea una respuesta completa del chat.
+     */
     public AiChatResponse(String reply, String sentiment, String riskLevel, List<String> emotions) {
         this.reply = reply;
         this.sentiment = sentiment;
@@ -51,6 +58,9 @@ public class AiChatResponse {
         this.emotions = emotions;
     }
 
+    /**
+     * Compara dos respuestas para saber si tienen los mismos datos.
+     */
     @Override
     public boolean equals(Object other) {
         if (this == other) {
@@ -65,6 +75,9 @@ public class AiChatResponse {
             && Objects.equals(emotions, response.emotions);
     }
 
+    /**
+     * Calcula un valor usando los campos de la respuesta.
+     */
     @Override
     public int hashCode() {
         return Objects.hash(reply, sentiment, riskLevel, emotions);

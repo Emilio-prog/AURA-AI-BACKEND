@@ -4,17 +4,27 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+/**
+ * Agrupa las peticiones relacionadas con login, registro y recuperación de contraseña.
+ * Son clases pequeñas que reciben datos desde el frontend.
+ */
 public final class AuthRequests {
 
     private AuthRequests() {
     }
 
+    /**
+     * Comprueba textos que son obligatorios, como email o contraseña.
+     */
     private static void validarTextoObligatorio(String valor, String campo) {
         if (valor == null || valor.isBlank()) {
             throw new IllegalArgumentException(campo + " no puede estar vacio");
         }
     }
 
+    /**
+     * Revisa que un texto tenga un tamaño normal para guardarlo o usarlo después.
+     */
     private static void validarLongitud(String valor, String campo, int minimo, int maximo) {
         if (valor == null) {
             return;
@@ -24,6 +34,9 @@ public final class AuthRequests {
         }
     }
 
+    /**
+     * Valida el email de forma sencilla antes de seguir con la petición.
+     */
     private static void validarEmail(String email) {
         validarTextoObligatorio(email, "email");
         validarLongitud(email, "email", 1, 320);
@@ -32,6 +45,9 @@ public final class AuthRequests {
         }
     }
 
+    /**
+     * Datos que se usan cuando una persona crea una cuenta nueva.
+     */
     public static class RegisterRequest {
         @NotBlank(message = "name no puede estar vacio")
         @Size(min = 2, max = 160, message = "name tiene una longitud incorrecta")
@@ -51,6 +67,9 @@ public final class AuthRequests {
         public RegisterRequest() {
         }
 
+        /**
+         * Constructor con validaciones básicas para evitar datos vacíos o mal escritos.
+         */
         public RegisterRequest(String name, String email, String password, String captchaToken) {
             this.name = name;
             this.email = email;
@@ -96,6 +115,9 @@ public final class AuthRequests {
         }
     }
 
+    /**
+     * Petición que llega al iniciar sesión con email y contraseña.
+     */
     public static class LoginRequest {
         @NotBlank(message = "email no puede estar vacio")
         @Email(message = "email no tiene un formato valido")
@@ -108,6 +130,9 @@ public final class AuthRequests {
         public LoginRequest() {
         }
 
+        /**
+         * Comprueba que el login tenga email válido y contraseña informada.
+         */
         public LoginRequest(String email, String password) {
             this.email = email;
             this.password = password;

@@ -6,6 +6,9 @@ import com.auraia.backend.models.entities.MoodLog;
 import com.auraia.backend.models.entities.User;
 import java.time.Instant;
 
+/**
+ * Define las reglas basicas para trabajar con notificaciones push.
+ */
 public interface WebPushService {
 
     PushResponses.PushConfigResponse config();

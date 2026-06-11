@@ -3,6 +3,10 @@ package com.auraia.backend.models.dto.response;
 import java.util.List;
 import org.springframework.data.domain.Page;
 
+/**
+ * Respuesta comun para listas paginadas.
+ * Sirve para mandar contenido y datos de pagina al frontend.
+ */
 public class PageResponse<T> {
     private List<T> content;
     private int page;
@@ -14,6 +18,9 @@ public class PageResponse<T> {
     public PageResponse() {
     }
 
+    /**
+     * Crea una pagina con contenido, tamano y totales.
+     */
     public PageResponse(List<T> content, int page, int size, long totalElements,
                         int totalPages, String sort) {
         this.content = content;
@@ -24,6 +31,9 @@ public class PageResponse<T> {
         this.sort = sort;
     }
 
+    /**
+     * Convierte una pagina de Spring en una respuesta propia de la API.
+     */
     public static <T> PageResponse<T> from(Page<T> page) {
         return new PageResponse<>(
             page.getContent(),

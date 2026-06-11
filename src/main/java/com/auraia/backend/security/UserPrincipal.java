@@ -8,6 +8,9 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+/**
+ * Usuario que Spring Security usa para saber quien ha iniciado sesion.
+ */
 public class UserPrincipal implements UserDetails {
     private UUID id;
     private String email;
@@ -18,6 +21,9 @@ public class UserPrincipal implements UserDetails {
     public UserPrincipal() {
     }
 
+    /**
+     * Crea el usuario de seguridad con sus datos basicos y permisos.
+     */
     public UserPrincipal(UUID id, String email, String password, boolean enabled,
                          Collection<? extends GrantedAuthority> authorities) {
         this.id = id;
@@ -27,6 +33,9 @@ public class UserPrincipal implements UserDetails {
         this.authorities = authorities;
     }
 
+    /**
+     * Crea un UserPrincipal a partir de la entidad User de la base de datos.
+     */
     public static UserPrincipal from(User user) {
         return new UserPrincipal(
             user.getId(),
@@ -65,36 +74,57 @@ public class UserPrincipal implements UserDetails {
         this.authorities = authorities;
     }
 
+    /**
+     * Devuelve los permisos del usuario.
+     */
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return authorities;
     }
 
+    /**
+     * Devuelve la contrasena cifrada que usa Spring Security.
+     */
     @Override
     public String getPassword() {
         return password;
     }
 
+    /**
+     * Usa el email como nombre de usuario.
+     */
     @Override
     public String getUsername() {
         return email;
     }
 
+    /**
+     * Indica si la cuenta sigue activa.
+     */
     @Override
     public boolean isAccountNonExpired() {
         return enabled;
     }
 
+    /**
+     * Indica si la cuenta no esta bloqueada.
+     */
     @Override
     public boolean isAccountNonLocked() {
         return enabled;
     }
 
+    /**
+     * Indica si las credenciales siguen siendo validas.
+     */
     @Override
     public boolean isCredentialsNonExpired() {
         return enabled;
     }
 
+    /**
+     * Devuelve si el usuario puede iniciar sesion.
+     */
     @Override
     public boolean isEnabled() {
         return enabled;

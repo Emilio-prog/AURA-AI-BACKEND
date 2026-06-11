@@ -21,6 +21,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Servicio que trabaja con los registros de ánimo del usuario.
+ * Aquí se guardan sesiones y se calculan estadísticas sencillas.
+ */
 @Service
 @RequiredArgsConstructor
 public class MoodServiceImpl implements MoodService {
@@ -30,6 +34,10 @@ public class MoodServiceImpl implements MoodService {
     private final ContentCryptoService contentCryptoService;
     private final WebPushService webPushService;
 
+    /**
+     * Busca los registros de ánimo del usuario entre dos fechas.
+     * Si no llegan fechas, usa un rango amplio por defecto.
+     */
     @Override
     @Transactional
     public PageResponse<DomainResponses.MoodLogResponse> list(Instant desde, Instant hasta, Pageable paginacion) {
@@ -48,6 +56,9 @@ public class MoodServiceImpl implements MoodService {
             .map(registro -> desencriptarYProteger(registro, usuario)));
     }
 
+    /**
+     * Guarda una sesión de ánimo y revisa si hay una caída fuerte.
+     */
     @Override
     @Transactional
     public DomainResponses.MoodLogResponse create(DomainRequests.MoodLogRequest peticion) {
@@ -71,6 +82,9 @@ public class MoodServiceImpl implements MoodService {
         return crearRespuesta(registroGuardado, nota);
     }
 
+    /**
+     * Calcula medias y tendencia usando los registros del usuario.
+     */
     @Override
     @Transactional(readOnly = true)
     public DomainResponses.MoodStatsResponse stats(Instant desde, Instant hasta) {
@@ -111,6 +125,9 @@ public class MoodServiceImpl implements MoodService {
         );
     }
 
+    /**
+     * Borra un registro de animo del usuario actual.
+     */
     @Override
     @Transactional
     public AuthResponses.MessageResponse delete(UUID id) {
@@ -123,19 +140,31 @@ public class MoodServiceImpl implements MoodService {
         return new AuthResponses.MessageResponse("OK");
     }
 
+    /**
+     * Busca el usuario que está usando la aplicación.
+     */
     private User usuarioActual() {
         return userRepository.findByIdAndDeletedAtIsNull(SecurityUtils.currentUserId())
             .orElseThrow(() -> new ResourceNotFoundException("User not found"));
     }
 
+    /**
+     * Convierte textos vacíos en null para no guardar espacios sin valor.
+     */
     private String textoVacioANull(String valor) {
         return valor == null || valor.isBlank() ? null : valor.trim();
     }
 
+    /**
+     * Redondea números para que las estadísticas salgan más limpias.
+     */
     private double redondear(double valor) {
         return Math.round(valor * 100.0) / 100.0;
     }
 
+    /**
+     * Mira los últimos registros y manda aviso si el ánimo baja mucho.
+     */
     private void avisarSiCaeMucho(User usuario, MoodLog registro) {
         MoodLog[] registrosAnteriores = moodLogRepository.buscarAnteriores(
             usuario,
@@ -153,6 +182,9 @@ public class MoodServiceImpl implements MoodService {
         }
     }
 
+    /**
+     * Calcula la media de la parte antigua de los registros.
+     */
     private double calcularMediaAnterior(MoodLog[] registros) {
         if (registros.length < 2) {
             return mediaDespues(registros);
@@ -162,6 +194,9 @@ public class MoodServiceImpl implements MoodService {
         return mediaDespues(registros, 0, mitad);
     }
 
+    /**
+     * Saca la media de los registros más recientes.
+     */
     private double calcularMediaReciente(MoodLog[] registros) {
         if (registros.length < 2) {
             return mediaDespues(registros);
@@ -171,6 +206,9 @@ public class MoodServiceImpl implements MoodService {
         return mediaDespues(registros, mitad, registros.length);
     }
 
+    /**
+     * Devuelve el porcentaje de mejora entre antes y después.
+     */
     private double calcularMejora(MoodLog[] registros) {
         double antes = mediaAntes(registros);
         double despues = mediaDespues(registros);
@@ -182,10 +220,16 @@ public class MoodServiceImpl implements MoodService {
         return ((antes - despues) / antes) * 100;
     }
 
+    /**
+     * Resta la media reciente menos la media anterior.
+     */
     private double calcularDiferenciaTendencia(MoodLog[] registros) {
         return calcularMediaReciente(registros) - calcularMediaAnterior(registros);
     }
 
+    /**
+     * Calcula la media del nivel antes de usar Aura.
+     */
     private double mediaAntes(MoodLog[] registros) {
         if (registros.length == 0) {
             return 0;
@@ -198,10 +242,16 @@ public class MoodServiceImpl implements MoodService {
         return suma / registros.length;
     }
 
+    /**
+     * Calcula la media del nivel después de usar Aura.
+     */
     private double mediaDespues(MoodLog[] registros) {
         return mediaDespues(registros, 0, registros.length);
     }
 
+    /**
+     * Calcula una media usando solo una parte del array.
+     */
     private double mediaDespues(MoodLog[] registros, int inicio, int fin) {
         if (fin <= inicio) {
             return 0;
@@ -214,6 +264,9 @@ public class MoodServiceImpl implements MoodService {
         return suma / (fin - inicio);
     }
 
+    /**
+     * Devuelve el texto que verá el frontend para la tendencia.
+     */
     private String calcularTendencia(double diferenciaTendencia) {
         if (diferenciaTendencia <= -1) {
             return "mejorando";
@@ -224,6 +277,9 @@ public class MoodServiceImpl implements MoodService {
         return "estable";
     }
 
+    /**
+     * Devuelve el valor antiguo que ya usaba el frontend.
+     */
     private String estadoAnterior(String estado) {
         if ("mejorando".equals(estado)) {
             return "improving";
@@ -234,6 +290,9 @@ public class MoodServiceImpl implements MoodService {
         return "stable";
     }
 
+    /**
+     * Comprueba si el último registro está mucho peor que los anteriores.
+     */
     private boolean hayCaidaFuerte(MoodLog[] registros) {
         if (registros.length < 4) {
             return false;
@@ -244,6 +303,10 @@ public class MoodServiceImpl implements MoodService {
         return ultimo.getAfterLevel() >= mediaAnterior + 3;
     }
 
+    /**
+     * Devuelve la nota del registro ya preparada para mostrarla.
+     * Si hace falta, tambien actualiza el valor protegido en base de datos.
+     */
     private DomainResponses.MoodLogResponse desencriptarYProteger(MoodLog registro, User usuario) {
         String nota = contentCryptoService.decrypt(usuario.getId(), "mood.note", registro.getNote());
         if (contentCryptoService.isEnabled()) {
@@ -259,6 +322,9 @@ public class MoodServiceImpl implements MoodService {
         return crearRespuesta(registro, nota);
     }
 
+    /**
+     * Crea la respuesta final de un registro de animo.
+     */
     private DomainResponses.MoodLogResponse crearRespuesta(MoodLog registro, String nota) {
         return new DomainResponses.MoodLogResponse(
             registro.getId(),

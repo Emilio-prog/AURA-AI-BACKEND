@@ -10,17 +10,27 @@ import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Peticiones relacionadas con el usuario y su configuración inicial.
+ * Aquí llegan datos del perfil, onboarding y cambios de contraseña.
+ */
 public final class UserRequests {
 
     private UserRequests() {
     }
 
+    /**
+     * Revisa textos que no pueden venir vacíos.
+     */
     private static void validarTextoObligatorio(String valor, String campo) {
         if (valor == null || valor.isBlank()) {
             throw new IllegalArgumentException(campo + " no puede estar vacio");
         }
     }
 
+    /**
+     * Comprueba un texto si viene informado. Si no viene, lo deja pasar.
+     */
     private static void validarTextoOpcional(String valor, String campo, int minimo, int maximo) {
         if (valor == null) {
             return;
@@ -33,18 +43,27 @@ public final class UserRequests {
         }
     }
 
+    /**
+     * Controla que un texto no sea demasiado largo.
+     */
     private static void validarLongitud(String valor, String campo, int maximo) {
         if (valor != null && valor.length() > maximo) {
             throw new IllegalArgumentException(campo + " es demasiado largo");
         }
     }
 
+    /**
+     * Mira de forma simple que el email tenga una arroba.
+     */
     private static void validarEmail(String email) {
         if (email != null && !email.contains("@")) {
             throw new IllegalArgumentException("email no tiene un formato valido");
         }
     }
 
+    /**
+     * Datos que se pueden cambiar desde el perfil del usuario.
+     */
     public static class UpdateUserRequest {
         @Size(min = 2, max = 160, message = "name tiene una longitud incorrecta")
         private String name;
@@ -56,6 +75,9 @@ public final class UserRequests {
         public UpdateUserRequest() {
         }
 
+        /**
+         * Crea la petición y revisa nombre y email si vienen rellenos.
+         */
         public UpdateUserRequest(String name, String email) {
             this.name = name;
             this.email = email;
@@ -184,6 +206,9 @@ public final class UserRequests {
         public CompleteOnboardingRequest() {
         }
 
+        /**
+         * Guarda las respuestas del onboarding y valida los datos más importantes.
+         */
         public CompleteOnboardingRequest(String preferredName, String language, String timezone,
                                          Boolean privacyAccepted, Boolean termsAccepted,
                                          Boolean supportOnlyAccepted, Boolean ageConfirmed,
@@ -316,6 +341,9 @@ public final class UserRequests {
         }
     }
 
+    /**
+     * Estado de ánimo elegido durante el onboarding.
+     */
     public static class CurrentMoodRequest {
         @NotBlank(message = "label no puede estar vacio")
         @Size(max = 80, message = "label es demasiado largo")
@@ -328,6 +356,9 @@ public final class UserRequests {
         public CurrentMoodRequest() {
         }
 
+        /**
+         * Crea el estado de ánimo con una etiqueta y una intensidad.
+         */
         public CurrentMoodRequest(String label, int intensity) {
             this.label = label;
             this.intensity = intensity;
@@ -352,6 +383,9 @@ public final class UserRequests {
         }
     }
 
+    /**
+     * Contacto de confianza que el usuario puede dejar durante el onboarding.
+     */
     public static class TrustedContactRequest {
         @Size(max = 160, message = "name es demasiado largo")
         private String name;
@@ -365,6 +399,9 @@ public final class UserRequests {
         public TrustedContactRequest() {
         }
 
+        /**
+         * Recoge los datos básicos del contacto y limita textos muy largos.
+         */
         public TrustedContactRequest(String name, String phone, String relationship) {
             this.name = name;
             this.phone = phone;

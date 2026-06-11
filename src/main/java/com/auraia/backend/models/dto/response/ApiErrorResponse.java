@@ -3,6 +3,10 @@ package com.auraia.backend.models.dto.response;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Respuesta que se devuelve cuando una peticion falla.
+ * Ayuda al frontend a mostrar un mensaje de error claro.
+ */
 public class ApiErrorResponse {
     private Instant timestamp;
     private int status;
@@ -14,6 +18,9 @@ public class ApiErrorResponse {
     public ApiErrorResponse() {
     }
 
+    /**
+     * Crea un error con estado, mensaje, ruta y errores de campos.
+     */
     public ApiErrorResponse(Instant timestamp, int status, String error, String message,
                             String path, Map<String, String> fieldErrors) {
         this.timestamp = timestamp;

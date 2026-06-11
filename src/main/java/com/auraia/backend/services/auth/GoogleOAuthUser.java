@@ -1,5 +1,8 @@
 package com.auraia.backend.services.auth;
 
+/**
+ * Datos basicos que devuelve Google despues del login.
+ */
 public class GoogleOAuthUser {
     private String subject;
     private String email;
@@ -9,6 +12,9 @@ public class GoogleOAuthUser {
     public GoogleOAuthUser() {
     }
 
+    /**
+     * Crea el usuario recibido desde Google.
+     */
     public GoogleOAuthUser(String subject, String email, boolean emailVerified, String name) {
         this.subject = subject;
         this.email = email;

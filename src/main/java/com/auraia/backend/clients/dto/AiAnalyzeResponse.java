@@ -2,6 +2,10 @@ package com.auraia.backend.clients.dto;
 
 import java.util.List;
 
+/**
+ * Respuesta del analisis de texto.
+ * Guarda el sentimiento, una puntuacion y las emociones detectadas.
+ */
 public class AiAnalyzeResponse {
     private String sentiment;
     private double score;
@@ -10,6 +14,9 @@ public class AiAnalyzeResponse {
     public AiAnalyzeResponse() {
     }
 
+    /**
+     * Crea una respuesta completa del analisis.
+     */
     public AiAnalyzeResponse(String sentiment, double score, List<String> emotions) {
         this.sentiment = sentiment;
         this.score = score;

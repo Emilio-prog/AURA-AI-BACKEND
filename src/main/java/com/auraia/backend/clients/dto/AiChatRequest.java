@@ -3,6 +3,9 @@ package com.auraia.backend.clients.dto;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Peticion que se manda, cuando el usuario escribe en el chat.
+ */
 public class AiChatRequest {
     private List<Map<String, Object>> history;
     private String message;
@@ -10,6 +13,9 @@ public class AiChatRequest {
     public AiChatRequest() {
     }
 
+    /**
+     * Crea la peticion con el historial anterior y el mensaje nuevo.
+     */
     public AiChatRequest(List<Map<String, Object>> history, String message) {
         this.history = history;
         this.message = message;

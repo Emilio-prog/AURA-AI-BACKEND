@@ -11,23 +11,36 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Peticiones de las pantallas principales de la aplicación.
+ * Incluye diario, ánimo, chat, contactos y ajustes.
+ */
 public final class DomainRequests {
 
     private DomainRequests() {
     }
 
+    /**
+     * Comprueba textos obligatorios antes de crear la petición.
+     */
     private static void validarTextoObligatorio(String valor, String campo) {
         if (valor == null || valor.isBlank()) {
             throw new IllegalArgumentException(campo + " no puede estar vacio");
         }
     }
 
+    /**
+     * Evita que lleguen textos demasiado grandes.
+     */
     private static void validarLongitud(String valor, String campo, int maximo) {
         if (valor != null && valor.length() > maximo) {
             throw new IllegalArgumentException(campo + " es demasiado largo");
         }
     }
 
+    /**
+     * Datos que se mandan al crear o editar una entrada del diario.
+     */
     public static class DiaryEntryRequest {
         @Size(max = 180, message = "title es demasiado largo")
         private String title;
@@ -48,6 +61,9 @@ public final class DomainRequests {
         public DiaryEntryRequest() {
         }
 
+        /**
+         * Valida el contenido del diario y limita campos largos como título o estado.
+         */
         public DiaryEntryRequest(String title, String content, Integer moodScore, String moodLabel, List<String> tags) {
             this.title = title;
             this.content = content;
@@ -101,6 +117,9 @@ public final class DomainRequests {
         }
     }
 
+    /**
+     * Registro de ánimo antes y después de usar Aura.
+     */
     public static class MoodLogRequest {
         @Min(value = 1, message = "beforeLevel esta fuera del rango permitido")
         @Max(value = 10, message = "beforeLevel esta fuera del rango permitido")
@@ -118,6 +137,9 @@ public final class DomainRequests {
         public MoodLogRequest() {
         }
 
+        /**
+         * Crea una sesión de ánimo con nota opcional y fecha opcional.
+         */
         public MoodLogRequest(int beforeLevel, int afterLevel, String note, Instant loggedAt) {
             this.beforeLevel = beforeLevel;
             this.afterLevel = afterLevel;
@@ -159,6 +181,9 @@ public final class DomainRequests {
         }
     }
 
+    /**
+     * Mensaje que el usuario escribe para hablar con Aura IA.
+     */
     public static class ChatMessageRequest {
         @NotBlank(message = "message no puede estar vacio")
         @Size(max = 8000, message = "message es demasiado largo")
@@ -167,6 +192,9 @@ public final class DomainRequests {
         public ChatMessageRequest() {
         }
 
+        /**
+         * Revisa que el mensaje no esté vacío ni sea demasiado largo.
+         */
         public ChatMessageRequest(String message) {
             this.message = message;
             validarTextoObligatorio(this.message, "message");
@@ -182,6 +210,9 @@ public final class DomainRequests {
         }
     }
 
+    /**
+     * Datos de un contacto de confianza del usuario.
+     */
     public static class ContactRequest {
         @NotBlank(message = "name no puede estar vacio")
         @Size(max = 160, message = "name es demasiado largo")
@@ -204,6 +235,9 @@ public final class DomainRequests {
         public ContactRequest() {
         }
 
+        /**
+         * Crea el contacto y comprueba los campos básicos.
+         */
         public ContactRequest(String name, String phone, String relationship, Integer priority, Boolean available, Boolean sosEnabled) {
             this.name = name;
             this.phone = phone;
@@ -330,6 +364,9 @@ public final class DomainRequests {
         }
     }
 
+    /**
+     * Ajustes del usuario, como tema, idioma y notificaciones.
+     */
     public static class UserSettingsRequest {
         private Theme theme;
 
@@ -345,6 +382,9 @@ public final class DomainRequests {
         public UserSettingsRequest() {
         }
 
+        /**
+         * Guarda los ajustes recibidos desde la pantalla de configuración.
+         */
         public UserSettingsRequest(Theme theme, String language, String timezone, Map<String, Object> notificationPreferences) {
             this.theme = theme;
             this.language = language;

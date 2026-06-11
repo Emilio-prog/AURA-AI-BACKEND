@@ -2,6 +2,9 @@ package com.auraia.backend.services.sms;
 
 import com.auraia.backend.models.enums.NotificationStatus;
 
+/**
+ * Resultado de enviar un SMS de emergencia.
+ */
 public class SosSmsResult {
     private NotificationStatus status;
     private String providerMessageId;
@@ -10,6 +13,9 @@ public class SosSmsResult {
     public SosSmsResult() {
     }
 
+    /**
+     * Crea el resultado con estado, id del proveedor y detalles.
+     */
     public SosSmsResult(NotificationStatus status, String providerMessageId, String details) {
         this.status = status;
         this.providerMessageId = providerMessageId;

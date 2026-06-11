@@ -42,6 +42,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Servicio principal para los datos del usuario.
+ * También completa el onboarding inicial.
+ */
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
@@ -264,6 +268,10 @@ public class UserServiceImpl implements UserService {
         validateTrustedContact(request.getTrustedContact());
     }
 
+    /**
+     * Devuelve el nombre limpio del onboarding.
+     * Si está vacío o tiene mala longitud, lanza un error claro.
+     */
     private String nombreOnboarding(UserRequests.CompleteOnboardingRequest request) {
         if (!hasText(request.getPreferredName())) {
             throw new BusinessException("El nombre no puede estar vacio");
@@ -347,10 +355,16 @@ public class UserServiceImpl implements UserService {
             .build());
     }
 
+    /**
+     * Devuelve true cuando un texto tiene contenido real.
+     */
     private boolean hasText(String value) {
         return value != null && !value.isBlank();
     }
 
+    /**
+     * Cambia un texto vacío a null.
+     */
     private String blankToNull(String value) {
         return hasText(value) ? value.trim() : null;
     }

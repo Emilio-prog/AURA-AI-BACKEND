@@ -42,6 +42,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Servicio que prepara y envia notificaciones push al navegador.
+ * Tambien guarda el resultado de cada envio.
+ */
 @Service
 @RequiredArgsConstructor
 public class WebPushServiceImpl implements WebPushService {
@@ -160,6 +164,9 @@ public class WebPushServiceImpl implements WebPushService {
         }
     }
 
+    /**
+     * Envia una alerta cuando el animo ha empeorado mucho.
+     */
     @Override
     @Transactional
     public void enviarAlertaCaidaAnimo(User usuario, MoodLog registro, double mediaAnterior) {
@@ -340,6 +347,9 @@ public class WebPushServiceImpl implements WebPushService {
         return booleanPreference(preferences, "enabled", true);
     }
 
+    /**
+     * Lee una preferencia booleana con un valor por defecto.
+     */
     private boolean booleanPreference(Map<String, Object> preferences, String key, boolean fallback) {
         if (preferences == null || !preferences.containsKey(key)) {
             return fallback;
@@ -354,6 +364,9 @@ public class WebPushServiceImpl implements WebPushService {
         return fallback;
     }
 
+    /**
+     * Lee una preferencia de texto y usa otro valor si viene vacia.
+     */
     private String stringPreference(Map<String, Object> preferences, String key, String fallback) {
         if (preferences == null) {
             return fallback;
@@ -362,6 +375,9 @@ public class WebPushServiceImpl implements WebPushService {
         return value instanceof String text && !text.isBlank() ? text : fallback;
     }
 
+    /**
+     * Obtiene la zona horaria del usuario.
+     */
     private ZoneId userZone(UserSettings settings) {
         try {
             return ZoneId.of(settings.getTimezone());

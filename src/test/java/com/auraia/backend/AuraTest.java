@@ -8,6 +8,10 @@ import java.util.Arrays;
 import java.util.Date;
 import org.junit.jupiter.api.Test;
 
+/**
+ * Pruebas sencillas para revisar los últimos cambios importantes del backend y que se vea claro 
+ * qué se está comprobando.
+ */
 public class AuraTest {
 
     private AuthRequests.RegisterRequest peticionRegistro;
@@ -16,6 +20,9 @@ public class AuraTest {
     private Date fechaFin;
     private String[] elementos = {};
 
+    /**
+     * Comprueba que la petición de registro guarda bien los datos básicos.
+     */
     @Test
     public void registroConDatos() {
         peticionRegistro = new AuthRequests.RegisterRequest("Emilio", "emilio@test.com", "Password123!", null);
@@ -31,6 +38,9 @@ public class AuraTest {
         }
     }
 
+    /**
+     * Revisa que un email mal escrito lance el error esperado.
+     */
     @Test
     public void emailNoValido() {
         try {
@@ -43,6 +53,9 @@ public class AuraTest {
         }
     }
 
+    /**
+     * Prueba el caso en el que el onboarding llega sin nombre.
+     */
     @Test
     public void nombreVacio() {
         try {
@@ -55,6 +68,9 @@ public class AuraTest {
         }
     }
 
+    /**
+     * Comprueba que una entrada de diario sin contenido no sea válida.
+     */
     @Test
     public void diarioSinContenido() {
         try {
@@ -67,6 +83,9 @@ public class AuraTest {
         }
     }
 
+    /**
+     * Revisa los datos nuevos que se usan en la tendencia de ánimo.
+     */
     @Test
     public void datosDeTendencia() {
         fechaInicio = new Date();
@@ -104,6 +123,9 @@ public class AuraTest {
         }
     }
 
+    /**
+     * Crea una petición de onboarding con datos mínimos para las pruebas.
+     */
     private UserRequests.CompleteOnboardingRequest crearOnboarding(String nombre) {
         return new UserRequests.CompleteOnboardingRequest(nombre, "es", "Europe/Madrid", true, true, true, true,
             Arrays.asList(elementos), Arrays.asList(elementos), null, Arrays.asList(elementos), null, null);
